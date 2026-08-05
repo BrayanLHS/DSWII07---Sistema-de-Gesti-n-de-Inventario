@@ -1,0 +1,110 @@
+@model SistemaInventario.Models.DashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="hero-panel rounded-4 p-5 mb-4">
+    <p class="text-uppercase small fw-semibold mb-2 opacity-75">Panel de control</p>
+    <h1 class="display-5 fw-bold mb-2">Sistema de Gestión de Inventario</h1>
+    <p class="fs-5 opacity-75 mb-4" style="max-width: 620px;">
+        Controla tu stock, categorías y proveedores en un solo lugar, con reportes en soles al instante.
+    </p>
+    <div class="d-flex flex-wrap gap-2">
+        <a asp-controller="Producto" asp-action="Registrar" class="btn btn-light btn-lg rounded-pill px-4 fw-semibold">
+            <i class="bi bi-plus-lg me-1"></i>Nuevo producto
+        </a>
+        <a asp-controller="Movimiento" asp-action="Registrar" class="btn btn-outline-light btn-lg rounded-pill px-4">
+            <i class="bi bi-arrow-left-right me-1"></i>Registrar movimiento
+        </a>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card kpi-card shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <h6 class="card-title text-muted mb-0">Valor total del inventario</h6>
+                    <span class="kpi-icon bg-primary-subtle text-primary"><i class="bi bi-cash-stack"></i></span>
+                </div>
+                <p class="display-6 fw-bold mb-0">S/ @Model.ValorTotalInventario.ToString("N2")</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card kpi-card shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <h6 class="card-title text-muted mb-0">Total de productos</h6>
+                    <span class="kpi-icon bg-secondary-subtle text-secondary"><i class="bi bi-box-seam"></i></span>
+                </div>
+                <p class="display-6 fw-bold mb-0">@Model.TotalProductos</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card kpi-card shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <h6 class="card-title text-muted mb-0">Stock bajo (&lt; 10)</h6>
+                    <span class="kpi-icon @(Model.CantidadStockBajo > 0 ? "bg-danger-subtle text-danger" : "bg-success-subtle text-success")">
+                        <i class="bi bi-exclamation-triangle"></i>
+                    </span>
+                </div>
+                <p class="display-6 fw-bold mb-0">@Model.CantidadStockBajo</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body p-4">
+        <h5 class="card-title mb-3">Valor de inventario por categoría</h5>
+        <table class="table table-striped table-hover mt-4 mb-0 rounded overflow-hidden">
+            <thead>
+                <tr>
+                    <th>Categoría</th>
+                    <th>Cantidad de productos</th>
+                    <th>Valor en inventario</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var c in Model.TopCategorias)
+                {
+                    <tr>
+                        <td>@c.Nombre</td>
+                        <td>@c.CantidadProductos</td>
+                        <td>S/ @c.ValorInventario.ToString("N2")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+    <script>
+        const etiquetas = @Html.Raw(Json.Serialize(Model.TopCategorias.Select(c => c.Nombre)));
+        const valores = @Html.Raw(Json.Serialize(Model.TopCategorias.Select(c => c.ValorInventario)));
+
+        const ctx = document.getElementById('graficoCategorias');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: etiquetas,
+                datasets: [{
+                    label: 'Valor de inventario (S/)',
+                    data: valores,
+                    backgroundColor: '#1db954',
+                    borderRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+    </script>
+}

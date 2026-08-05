@@ -1,50 +1,82 @@
-﻿<!DOCTYPE html>
-<html lang="en">
+@{
+    var controladorActual = ViewContext.RouteData.Values["controller"]?.ToString();
+    string EsActivo(params string[] controladores) =>
+        controladores.Contains(controladorActual) ? "active fw-semibold" : "";
+}
+<!DOCTYPE html>
+<html lang="es">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - SistemaInventario</title>
     <script type="importmap"></script>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/SistemaInventario.styles.css" asp-append-version="true" />
 </head>
-<body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">SistemaInventario</a>
+<body class="d-flex flex-column min-vh-100">
+    <header class="flex-shrink-0">
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm py-4">
+            <div class="container-fluid px-4">
+                <a class="navbar-brand fs-4 fw-bold d-flex align-items-center" asp-area="" asp-controller="Dashboard" asp-action="Index">
+                    <i class="bi bi-box-seam-fill me-2"></i>SistemaInventario
+                </a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
                         aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
+                <div class="navbar-collapse collapse d-lg-inline-flex justify-content-between align-items-lg-center">
+                    <ul class="navbar-nav flex-grow-1 fs-5 gap-lg-4">
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                            <a class="nav-link @EsActivo("Producto")" asp-area="" asp-controller="Producto" asp-action="Index">Productos</a>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle @EsActivo("Categoria", "Proveedor", "Movimiento")" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Inventario</a>
+                            <ul class="dropdown-menu dropdown-menu-dark shadow">
+                                <li><a class="dropdown-item" asp-controller="Categoria" asp-action="Index">Categorías</a></li>
+                                <li><a class="dropdown-item" asp-controller="Proveedor" asp-action="Index">Proveedores</a></li>
+                                <li><a class="dropdown-item" asp-controller="Movimiento" asp-action="Index">Kardex</a></li>
+                            </ul>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+                            <a class="nav-link @EsActivo("Cliente")" asp-area="" asp-controller="Cliente" asp-action="Index">Cliente API</a>
                         </li>
                     </ul>
+                    <a asp-controller="Producto" asp-action="Registrar" class="btn btn-primary rounded-pill px-4 fw-semibold mt-3 mt-lg-0 ms-lg-4">
+                        Nuevo producto
+                    </a>
                 </div>
             </div>
         </nav>
     </header>
-    <div class="container">
-        <main role="main" class="pb-3">
+    <div class="container-fluid px-4 flex-grow-1">
+        <main role="main" class="pt-4 pb-5">
             @RenderBody()
         </main>
     </div>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2026 - SistemaInventario - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+    <footer class="footer-app flex-shrink-0">
+        <div class="container-fluid px-4 py-3 d-flex align-items-center">
+            <div class="d-flex align-items-center fw-bold text-white">
+                <i class="bi bi-box-seam-fill me-2"></i>SistemaInventario
+            </div>
         </div>
     </footer>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    <script>
+        // Los mensajes de éxito (TempData) se cierran solos después de unos segundos
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('.alert-success').forEach(function (alerta) {
+                setTimeout(function () {
+                    var instancia = bootstrap.Alert.getOrCreateInstance(alerta);
+                    instancia.close();
+                }, 3000);
+            });
+        });
+    </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

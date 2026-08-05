@@ -1,0 +1,46 @@
+@model SistemaInventario.Models.MovimientoViewModel
+@{
+    ViewData["Title"] = "Registrar movimiento";
+}
+
+<h1>Registrar movimiento de inventario</h1>
+
+<form asp-action="Registrar" method="post">
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+    <div class="form-group mb-3">
+        <label asp-for="IdProducto" class="control-label"></label>
+        <select asp-for="IdProducto" class="form-select" asp-items="ViewBag.Productos">
+            <option value="">-- Selecciona un producto --</option>
+        </select>
+        <span asp-validation-for="IdProducto" class="text-danger"></span>
+    </div>
+
+    <div class="form-group mb-3">
+        <label asp-for="Tipo" class="control-label"></label>
+        <select asp-for="Tipo" class="form-select">
+            <option value="Entrada">Entrada</option>
+            <option value="Salida">Salida</option>
+        </select>
+        <span asp-validation-for="Tipo" class="text-danger"></span>
+    </div>
+
+    <div class="form-group mb-3">
+        <label asp-for="Cantidad" class="control-label"></label>
+        <input asp-for="Cantidad" class="form-control" />
+        <span asp-validation-for="Cantidad" class="text-danger"></span>
+    </div>
+
+    <div class="form-group mb-3">
+        <label asp-for="Motivo" class="control-label"></label>
+        <input asp-for="Motivo" class="form-control" placeholder="Ej: Compra a proveedor, venta, ajuste de inventario..." />
+        <span asp-validation-for="Motivo" class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Registrar</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+</form>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

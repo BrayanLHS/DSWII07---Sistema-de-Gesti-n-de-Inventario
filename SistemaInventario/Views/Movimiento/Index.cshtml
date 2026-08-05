@@ -1,0 +1,65 @@
+@model List<SistemaInventario.Models.MovimientoViewModel>
+@{
+    ViewData["Title"] = "Kardex de movimientos";
+    int? idProducto = ViewBag.IdProducto;
+    var producto = ViewBag.Producto as SistemaInventario.Models.ProductoViewModel;
+}
+
+<h1>Kardex de movimientos</h1>
+
+@if (TempData["Exito"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["Exito"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+    </div>
+}
+
+@if (idProducto.HasValue && producto != null)
+{
+    <p class="text-muted">Mostrando movimientos de: <strong>@producto.Nombre</strong> (stock actual: @producto.Stock) — <a asp-action="Index">ver todos</a></p>
+}
+
+<a asp-action="Registrar" asp-route-idProducto="@idProducto" class="btn btn-primary mb-3">+ Registrar movimiento</a>
+
+<div class="table-card">
+<table class="table table-striped table-hover">
+    <thead>
+        <tr>
+            <th>Fecha</th>
+            <th>Producto</th>
+            <th>Tipo</th>
+            <th>Cantidad</th>
+            <th>Motivo</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (Model == null || Model.Count == 0)
+        {
+            <tr><td colspan="5">No hay movimientos registrados.</td></tr>
+        }
+        else
+        {
+            foreach (var m in Model)
+            {
+                <tr>
+                    <td>@m.Fecha.ToString("dd/MM/yyyy HH:mm")</td>
+                    <td>@m.NombreProducto</td>
+                    <td>
+                        @if (m.Tipo == "Entrada")
+                        {
+                            <span class="badge bg-success">Entrada</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-danger">Salida</span>
+                        }
+                    </td>
+                    <td>@m.Cantidad</td>
+                    <td>@(m.Motivo ?? "-")</td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>
+</div>

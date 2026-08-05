@@ -1,0 +1,54 @@
+@model List<SistemaInventario.Models.ProveedorViewModel>
+@{
+    ViewData["Title"] = "Proveedores";
+}
+
+<h1>Proveedores</h1>
+
+@if (TempData["Exito"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["Exito"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+    </div>
+}
+
+<a asp-action="Registrar" class="btn btn-primary mb-3">+ Nuevo proveedor</a>
+
+<div class="table-card">
+<table class="table table-striped table-hover">
+    <thead>
+        <tr>
+            <th>Id</th>
+            <th>Nombre</th>
+            <th>Contacto</th>
+            <th>Teléfono</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (Model == null || Model.Count == 0)
+        {
+            <tr><td colspan="5">No hay proveedores registrados.</td></tr>
+        }
+        else
+        {
+            foreach (var p in Model)
+            {
+                <tr>
+                    <td>@p.IdProveedor</td>
+                    <td>@p.Nombre</td>
+                    <td>@(p.Contacto ?? "-")</td>
+                    <td>@(p.Telefono ?? "-")</td>
+                    <td>
+                        <a asp-action="Editar" asp-route-id="@p.IdProveedor" class="btn btn-sm btn-outline-warning">Editar</a>
+                        <form asp-action="Eliminar" asp-route-id="@p.IdProveedor" method="post" class="d-inline" onsubmit="return confirm('¿Eliminar este proveedor?');">
+                            <button type="submit" class="btn btn-sm btn-outline-danger">Eliminar</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>
+</div>

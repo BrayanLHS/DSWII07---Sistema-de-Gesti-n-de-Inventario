@@ -1,0 +1,50 @@
+@model List<SistemaInventario.Models.CategoriaViewModel>
+@{
+    ViewData["Title"] = "Categorías";
+}
+
+<h1>Categorías</h1>
+
+@if (TempData["Exito"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["Exito"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+    </div>
+}
+
+<a asp-action="Registrar" class="btn btn-primary mb-3">+ Nueva categoría</a>
+
+<div class="table-card">
+<table class="table table-striped table-hover">
+    <thead>
+        <tr>
+            <th>Id</th>
+            <th>Nombre</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (Model == null || Model.Count == 0)
+        {
+            <tr><td colspan="3">No hay categorías registradas.</td></tr>
+        }
+        else
+        {
+            foreach (var c in Model)
+            {
+                <tr>
+                    <td>@c.IdCategoria</td>
+                    <td>@c.Nombre</td>
+                    <td>
+                        <a asp-action="Editar" asp-route-id="@c.IdCategoria" class="btn btn-sm btn-outline-warning">Editar</a>
+                        <form asp-action="Eliminar" asp-route-id="@c.IdCategoria" method="post" class="d-inline" onsubmit="return confirm('¿Eliminar esta categoría? Solo se puede si no tiene productos asociados.');">
+                            <button type="submit" class="btn btn-sm btn-outline-danger">Eliminar</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>
+</div>

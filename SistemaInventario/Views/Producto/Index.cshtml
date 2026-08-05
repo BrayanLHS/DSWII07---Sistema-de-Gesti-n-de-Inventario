@@ -1,1 +1,95 @@
-//HOLA ESTO ES UNA PRUEBA
+@model List<SistemaInventario.Models.ProductoViewModel>
+@{
+    ViewData["Title"] = "Catálogo de productos";
+    var buscar = ViewBag.Buscar as string;
+    int pagina = ViewBag.Pagina ?? 1;
+    int totalPaginas = ViewBag.TotalPaginas ?? 1;
+    const int stockMinimo = 10;
+}
+
+<h1>Catálogo de productos</h1>
+
+@if (TempData["Exito"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["Exito"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+    </div>
+}
+
+<div class="d-flex justify-content-between mb-3 flex-wrap" style="gap:.5rem;">
+    <form method="get" class="d-flex" style="gap:.5rem;">
+        <input type="text" name="buscar" value="@buscar" class="form-control" placeholder="Buscar por nombre..." />
+        <button type="submit" class="btn btn-outline-primary">Buscar</button>
+        <a asp-action="Index" class="btn btn-outline-secondary">Limpiar</a>
+    </form>
+    <div style="gap:.5rem;" class="d-flex">
+        <a asp-action="ExportarExcel" class="btn btn-outline-success">Exportar Excel</a>
+        <a asp-action="ExportarPdf" class="btn btn-outline-danger">Exportar PDF</a>
+        <a asp-action="Registrar" class="btn btn-primary">+ Nuevo producto</a>
+    </div>
+</div>
+
+<div class="table-card">
+<table class="table table-striped table-hover">
+    <thead>
+        <tr>
+            <th>Id</th>
+            <th>Nombre</th>
+            <th>Categoría</th>
+            <th>Proveedor</th>
+            <th>Precio</th>
+            <th>Stock</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (Model == null || Model.Count == 0)
+        {
+            <tr><td colspan="7">No hay productos registrados.</td></tr>
+        }
+        else
+        {
+            foreach (var p in Model)
+            {
+                <tr class="@(p.Stock < stockMinimo ? "table-danger" : "")">
+                    <td>@p.IdProducto</td>
+                    <td>@p.Nombre</td>
+                    <td>@p.NombreCategoria</td>
+                    <td>@(p.NombreProveedor ?? "-")</td>
+                    <td>S/ @p.Precio.ToString("N2")</td>
+                    <td>
+                        @p.Stock
+                        @if (p.Stock < stockMinimo)
+                        {
+                            <span class="badge bg-danger">Bajo</span>
+                        }
+                    </td>
+                    <td class="text-nowrap">
+                        <a asp-action="Detalle" asp-route-id="@p.IdProducto" class="btn btn-sm btn-outline-info">Ver</a>
+                        <a asp-action="Editar" asp-route-id="@p.IdProducto" class="btn btn-sm btn-outline-warning">Editar</a>
+                        <a asp-controller="Movimiento" asp-action="Index" asp-route-idProducto="@p.IdProducto" class="btn btn-sm btn-outline-secondary">Kardex</a>
+                        <form asp-action="Eliminar" asp-route-id="@p.IdProducto" method="post" class="d-inline" onsubmit="return confirm('¿Eliminar este producto?');">
+                            <button type="submit" class="btn btn-sm btn-outline-danger">Eliminar</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>
+</div>
+
+@if (string.IsNullOrWhiteSpace(buscar) && totalPaginas > 1)
+{
+    <nav>
+        <ul class="pagination">
+            @for (int i = 1; i <= totalPaginas; i++)
+            {
+                <li class="page-item @(i == pagina ? "active" : "")">
+                    <a class="page-link" asp-action="Index" asp-route-pagina="@i">@i</a>
+                </li>
+            }
+        </ul>
+    </nav>
+}

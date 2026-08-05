@@ -1,0 +1,30 @@
+@model SistemaInventario.Models.ProductoViewModel
+@{
+    ViewData["Title"] = "Detalle del producto";
+}
+
+<h1>Detalle del producto</h1>
+
+<dl class="row">
+    <dt class="col-sm-2">Id</dt>
+    <dd class="col-sm-10">@Model.IdProducto</dd>
+
+    <dt class="col-sm-2">Nombre</dt>
+    <dd class="col-sm-10">@Model.Nombre</dd>
+
+    <dt class="col-sm-2">Categoría</dt>
+    <dd class="col-sm-10">@Model.NombreCategoria</dd>
+
+    <dt class="col-sm-2">Proveedor</dt>
+    <dd class="col-sm-10">@(Model.NombreProveedor ?? "-")</dd>
+
+    <dt class="col-sm-2">Precio</dt>
+    <dd class="col-sm-10">S/ @Model.Precio.ToString("N2")</dd>
+
+    <dt class="col-sm-2">Stock</dt>
+    <dd class="col-sm-10">@Model.Stock</dd>
+</dl>
+
+<a asp-action="Editar" asp-route-id="@Model.IdProducto" class="btn btn-warning">Editar</a>
+<a asp-controller="Movimiento" asp-action="Index" asp-route-idProducto="@Model.IdProducto" class="btn btn-outline-secondary">Ver kardex</a>
+<a asp-action="Index" class="btn btn-secondary">Volver al catálogo</a>

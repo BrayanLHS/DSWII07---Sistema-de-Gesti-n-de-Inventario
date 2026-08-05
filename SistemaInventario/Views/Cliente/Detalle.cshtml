@@ -1,0 +1,25 @@
+@model SistemaInventario.Models.ProductoViewModel
+@{
+    ViewData["Title"] = "Detalle (vía API)";
+}
+
+<h1>Detalle del producto (vía API)</h1>
+
+<dl class="row">
+    <dt class="col-sm-2">Id</dt>
+    <dd class="col-sm-10">@Model.IdProducto</dd>
+
+    <dt class="col-sm-2">Nombre</dt>
+    <dd class="col-sm-10">@Model.Nombre</dd>
+
+    <dt class="col-sm-2">Categoría</dt>
+    <dd class="col-sm-10">@Model.NombreCategoria</dd>
+
+    <dt class="col-sm-2">Precio</dt>
+    <dd class="col-sm-10">S/ @Model.Precio.ToString("N2")</dd>
+
+    <dt class="col-sm-2">Stock</dt>
+    <dd class="col-sm-10">@Model.Stock</dd>
+</dl>
+
+<a asp-action="Index" class="btn btn-secondary">Volver</a>

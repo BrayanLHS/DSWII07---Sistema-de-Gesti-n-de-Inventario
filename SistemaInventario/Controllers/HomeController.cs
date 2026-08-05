@@ -13,14 +13,10 @@ public class HomeController : Controller
         _logger = logger;
     }
 
+    // El sistema abre directamente en el Dashboard
     public IActionResult Index()
     {
-        return View();
-    }
-
-    public IActionResult Privacy()
-    {
-        return View();
+        return RedirectToAction("Index", "Dashboard");
     }
 
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
