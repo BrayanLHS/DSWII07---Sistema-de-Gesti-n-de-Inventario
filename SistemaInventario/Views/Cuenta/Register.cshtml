@@ -1,0 +1,82 @@
+@model RegisterViewModel
+@{
+    ViewData["Title"] = "Registrarse";
+}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-5">
+        <div class="card shadow">
+            <div class="card-body p-4">
+
+                <h2 class="text-center mb-4">
+                    Crear cuenta
+                </h2>
+                <form asp-action="Register" method="post">
+
+                    <div asp-validation-summary="ModelOnly"
+                         class="text-danger mb-3">
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="Nombre"
+                               class="form-label">
+                        </label>
+                        <input asp-for="Nombre"
+                               class="form-control" />
+
+                        <span asp-validation-for="Nombre"
+                              class="text-danger">
+                        </span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="Correo"
+                               class="form-label">
+                        </label>
+
+                        <input asp-for="Correo"
+                               class="form-control" />
+
+                        <span asp-validation-for="Correo"
+                              class="text-danger">
+                        </span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="Clave"
+                               class="form-label">
+                            Contraseña
+                        </label>
+                        <input asp-for="Clave"
+                               class="form-control" />
+                        <span asp-validation-for="Clave"
+                              class="text-danger">
+                        </span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="ConfirmarClave"
+                               class="form-label">
+                            Confirmar contraseña
+                        </label>
+                        <input asp-for="ConfirmarClave"
+                               class="form-control" />
+                        <span asp-validation-for="ConfirmarClave"
+                              class="text-danger">
+                        </span>
+                    </div>
+                    <button type="submit"
+                            class="btn btn-success w-100">
+                        Registrarse
+                    </button>
+                </form>
+                <p class="text-center mt-3">
+                    ¿Ya tienes una cuenta?
+                    <a asp-action="Login">
+                        Iniciar sesión
+                    </a>
+                </p>
+
+            </div>
+        </div>
+    </div>
+</div>
+@section Scripts
+{
+    <partial name="_ValidationScriptsPartial" />
+}
