@@ -1,4 +1,5 @@
-[SistemaInventario.sql](https://github.com/user-attachments/files/30803093/SistemaInventario.sql)
+--Base de datos--
+
 IF DB_ID('SistemaInventario') IS NULL
 BEGIN
     CREATE DATABASE SistemaInventario;
