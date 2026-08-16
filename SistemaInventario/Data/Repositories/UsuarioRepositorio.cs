@@ -25,9 +25,10 @@ namespace SistemaInventario.Data.Repositories
             using SqlConnection cn = conexionBD.ObtenerConexion();
             cn.Open();
             SqlCommand cmd = new SqlCommand(
-                @"INSERT INTO Usuario(Nombre, Correo, Clave)
-                  VALUES(@Nombre, @Correo, @Clave)", cn);
+                @"INSERT INTO Usuario(Nombre, Apellido, Correo, Clave, Rol)
+                  VALUES(@Nombre, @Apellido, @Correo, @Clave, 'Usuario')", cn);
             cmd.Parameters.AddWithValue("@Nombre", usuario.Nombre);
+            cmd.Parameters.AddWithValue("@Apellido", usuario.Apellido);
             cmd.Parameters.AddWithValue("@Correo", usuario.Correo);
             cmd.Parameters.AddWithValue("@Clave", usuario.Clave);
             cmd.ExecuteNonQuery();
@@ -37,7 +38,7 @@ namespace SistemaInventario.Data.Repositories
             using SqlConnection cn = conexionBD.ObtenerConexion();
             cn.Open();
             SqlCommand cmd = new SqlCommand(
-                @"SELECT IdUsuario, Nombre, Correo, Clave
+                @"SELECT IdUsuario, Nombre, Apellido, Correo, Clave, Rol
                   FROM Usuario
                   WHERE Correo = @Correo", cn);
             cmd.Parameters.AddWithValue("@Correo", correo);
@@ -48,11 +49,45 @@ namespace SistemaInventario.Data.Repositories
                 {
                     IdUsuario = Convert.ToInt32(dr["IdUsuario"]),
                     Nombre = dr["Nombre"].ToString() ?? string.Empty,
+                    Apellido = dr["Apellido"].ToString() ?? string.Empty,
                     Correo = dr["Correo"].ToString() ?? string.Empty,
-                    Clave = dr["Clave"].ToString() ?? string.Empty
+                    Clave = dr["Clave"].ToString() ?? string.Empty,
+                    Rol = dr["Rol"].ToString() ?? "Usuario"
                 };
             }
             return null;
+        }
+        public List<UsuarioViewModel> Listar()
+        {
+            var lista = new List<UsuarioViewModel>();
+            using SqlConnection cn = conexionBD.ObtenerConexion();
+            cn.Open();
+            SqlCommand cmd = new SqlCommand(
+                @"SELECT IdUsuario, Nombre, Apellido, Correo, Rol
+                  FROM Usuario
+                  ORDER BY Nombre", cn);
+            using SqlDataReader dr = cmd.ExecuteReader();
+            while (dr.Read())
+            {
+                lista.Add(new UsuarioViewModel
+                {
+                    IdUsuario = Convert.ToInt32(dr["IdUsuario"]),
+                    Nombre = dr["Nombre"].ToString() ?? string.Empty,
+                    Apellido = dr["Apellido"].ToString() ?? string.Empty,
+                    Correo = dr["Correo"].ToString() ?? string.Empty,
+                    Rol = dr["Rol"].ToString() ?? "Usuario"
+                });
+            }
+            return lista;
+        }
+        public void Eliminar(int idUsuario)
+        {
+            using SqlConnection cn = conexionBD.ObtenerConexion();
+            cn.Open();
+            SqlCommand cmd = new SqlCommand(
+                "DELETE FROM Usuario WHERE IdUsuario = @Id", cn);
+            cmd.Parameters.AddWithValue("@Id", idUsuario);
+            cmd.ExecuteNonQuery();
         }
     }
 }

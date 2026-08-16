@@ -223,6 +223,13 @@ body {
   box-shadow: none !important;
 }
 
+/* Lista de errores de validacion dentro de un alert: sin bullets, alineada al icono */
+.alert .validation-summary-errors ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
 /* Badges con más presencia */
 .badge {
   padding: 0.4em 0.75em;
@@ -236,8 +243,16 @@ body {
 .form-select {
   border-radius: 50px;
   padding-left: 1rem;
-  padding-right: 1rem;
   border-color: var(--gris-200);
+}
+
+.form-control {
+  padding-right: 1rem;
+}
+
+/* El select necesita espacio extra a la derecha para no montarse con la flecha */
+.form-select {
+  padding-right: 2.25rem;
 }
 
 .form-control:focus,

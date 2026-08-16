@@ -32,21 +32,37 @@ namespace SistemaInventario.Data.Repositories
             Stock = Convert.ToInt32(dr["Stock"])
         };
 
-        public List<ProductoViewModel> Listar(string? buscar = null)
+        public List<ProductoViewModel> Listar(string? buscar = null, int? idCategoria = null, int? idProveedor = null, int? stockMenorQue = null)
         {
             List<ProductoViewModel> lista = new List<ProductoViewModel>();
 
             using SqlConnection cn = conexionBD.ObtenerConexion();
             cn.Open();
 
-            var sql = SelectBase;
+            var condiciones = new List<string>();
             if (!string.IsNullOrWhiteSpace(buscar))
-                sql += " WHERE p.Nombre LIKE @buscar";
+                condiciones.Add("p.Nombre LIKE @buscar");
+            if (idCategoria.HasValue)
+                condiciones.Add("p.IdCategoria = @idCategoria");
+            if (idProveedor.HasValue)
+                condiciones.Add("p.IdProveedor = @idProveedor");
+            if (stockMenorQue.HasValue)
+                condiciones.Add("p.Stock < @stockMenorQue");
+
+            var sql = SelectBase;
+            if (condiciones.Count > 0)
+                sql += " WHERE " + string.Join(" AND ", condiciones);
             sql += " ORDER BY p.IdProducto";
 
             using SqlCommand cmd = new SqlCommand(sql, cn);
             if (!string.IsNullOrWhiteSpace(buscar))
                 cmd.Parameters.AddWithValue("@buscar", $"%{buscar}%");
+            if (idCategoria.HasValue)
+                cmd.Parameters.AddWithValue("@idCategoria", idCategoria.Value);
+            if (idProveedor.HasValue)
+                cmd.Parameters.AddWithValue("@idProveedor", idProveedor.Value);
+            if (stockMenorQue.HasValue)
+                cmd.Parameters.AddWithValue("@stockMenorQue", stockMenorQue.Value);
 
             using SqlDataReader dr = cmd.ExecuteReader();
             while (dr.Read())
@@ -93,14 +109,15 @@ namespace SistemaInventario.Data.Repositories
             return dr.Read() ? Mapear(dr) : null;
         }
 
-        public void Insertar(ProductoViewModel producto)
+        public int Insertar(ProductoViewModel producto)
         {
             using SqlConnection cn = conexionBD.ObtenerConexion();
             cn.Open();
 
             using SqlCommand cmd = new SqlCommand(
                 @"INSERT INTO Producto(Nombre, IdCategoria, IdProveedor, Precio, Stock)
-                  VALUES(@Nombre, @IdCategoria, @IdProveedor, @Precio, @Stock)", cn);
+                  VALUES(@Nombre, @IdCategoria, @IdProveedor, @Precio, @Stock);
+                  SELECT CAST(SCOPE_IDENTITY() AS INT);", cn);
 
             cmd.Parameters.AddWithValue("@Nombre", producto.Nombre);
             cmd.Parameters.AddWithValue("@IdCategoria", producto.IdCategoria);
@@ -108,7 +125,7 @@ namespace SistemaInventario.Data.Repositories
             cmd.Parameters.AddWithValue("@Precio", producto.Precio);
             cmd.Parameters.AddWithValue("@Stock", producto.Stock);
 
-            cmd.ExecuteNonQuery();
+            return (int)cmd.ExecuteScalar();
         }
 
         public void Actualizar(ProductoViewModel producto)

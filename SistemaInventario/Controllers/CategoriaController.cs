@@ -7,16 +7,28 @@ namespace SistemaInventario.Controllers
     public class CategoriaController : Controller
     {
         private readonly ICategoriaRepositorio _repo;
+        private readonly IProductoRepositorio _productos;
 
-        public CategoriaController(ICategoriaRepositorio repo)
+        public CategoriaController(ICategoriaRepositorio repo, IProductoRepositorio productos)
         {
             _repo = repo;
+            _productos = productos;
         }
 
-        public IActionResult Index()
+        // GET: /Categoria?verProductos=3 -> muestra el panel de productos de esa categoria al costado
+        public IActionResult Index(string? buscar, int? verProductos)
         {
             ViewData["Title"] = "Categorías";
-            return View(_repo.Listar());
+            ViewBag.Buscar = buscar;
+            ViewBag.VerProductos = verProductos;
+
+            if (verProductos.HasValue)
+            {
+                ViewBag.CategoriaSeleccionada = _repo.ObtenerPorId(verProductos.Value);
+                ViewBag.ProductosDeCategoria = _productos.Listar(idCategoria: verProductos.Value);
+            }
+
+            return View(_repo.Listar(buscar));
         }
 
         [HttpGet]
@@ -55,6 +67,12 @@ namespace SistemaInventario.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult Eliminar(int id)
         {
+            if (_repo.TieneProductosAsociados(id))
+            {
+                TempData["Error"] = "No se puede eliminar esta categoría porque tiene productos asociados. Reasigna o elimina esos productos primero.";
+                return RedirectToAction(nameof(Index));
+            }
+
             _repo.Eliminar(id);
             TempData["Exito"] = "Categoría eliminada.";
             return RedirectToAction(nameof(Index));

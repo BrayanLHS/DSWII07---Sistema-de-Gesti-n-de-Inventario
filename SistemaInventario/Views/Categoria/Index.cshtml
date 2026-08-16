@@ -1,6 +1,10 @@
 @model List<SistemaInventario.Models.CategoriaViewModel>
 @{
     ViewData["Title"] = "Categorías";
+    var buscar = ViewBag.Buscar as string;
+    int? verProductos = ViewBag.VerProductos as int?;
+    var categoriaSeleccionada = ViewBag.CategoriaSeleccionada as SistemaInventario.Models.CategoriaViewModel;
+    var productosDeCategoria = ViewBag.ProductosDeCategoria as List<SistemaInventario.Models.ProductoViewModel>;
 }
 
 <h1>Categorías</h1>
@@ -12,39 +16,154 @@
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
     </div>
 }
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+    </div>
+}
 
-<a asp-action="Registrar" class="btn btn-primary mb-3">+ Nueva categoría</a>
-
-<div class="table-card">
-<table class="table table-striped table-hover">
-    <thead>
-        <tr>
-            <th>Id</th>
-            <th>Nombre</th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-        @if (Model == null || Model.Count == 0)
-        {
-            <tr><td colspan="3">No hay categorías registradas.</td></tr>
-        }
-        else
-        {
-            foreach (var c in Model)
-            {
-                <tr>
-                    <td>@c.IdCategoria</td>
-                    <td>@c.Nombre</td>
-                    <td>
-                        <a asp-action="Editar" asp-route-id="@c.IdCategoria" class="btn btn-sm btn-outline-warning">Editar</a>
-                        <form asp-action="Eliminar" asp-route-id="@c.IdCategoria" method="post" class="d-inline" onsubmit="return confirm('¿Eliminar esta categoría? Solo se puede si no tiene productos asociados.');">
-                            <button type="submit" class="btn btn-sm btn-outline-danger">Eliminar</button>
-                        </form>
-                    </td>
-                </tr>
-            }
-        }
-    </tbody>
-</table>
+<div class="d-flex justify-content-between mb-3 flex-wrap" style="gap:.5rem;">
+    <form method="get" class="d-flex" style="gap:.5rem;">
+        <input type="text" name="buscar" value="@buscar" class="form-control" placeholder="Buscar por nombre..." />
+        <button type="submit" class="btn btn-outline-primary">Buscar</button>
+        <a asp-action="Index" class="btn btn-outline-secondary">Limpiar</a>
+    </form>
+    <a asp-action="Registrar" class="btn btn-primary">+ Nueva categoría</a>
 </div>
+
+<div class="row g-3">
+    <div class="@(verProductos.HasValue ? "col-lg-7" : "col-12")">
+        <div class="table-card">
+        <table class="table table-striped table-hover">
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Productos</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model == null || Model.Count == 0)
+                {
+                    <tr><td colspan="3">No hay categorías registradas.</td></tr>
+                }
+                else
+                {
+                    foreach (var c in Model)
+                    {
+                        <tr class="@(verProductos == c.IdCategoria ? "table-active" : "")">
+                            <td>@c.Nombre</td>
+                            <td>
+                                <a asp-action="Index" asp-route-buscar="@buscar" asp-route-verProductos="@c.IdCategoria"
+                                   class="badge text-decoration-none @(c.CantidadProductos > 0 ? "bg-secondary" : "bg-success")"
+                                   title="Ver productos de esta categoría">
+                                    @c.CantidadProductos
+                                </a>
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <a asp-action="Editar" asp-route-id="@c.IdCategoria" class="btn btn-warning text-white" title="Editar">
+                                        <i class="bi bi-pencil-fill"></i>
+                                    </a>
+                                    @if (c.CantidadProductos > 0)
+                                    {
+                                        <button type="button" class="btn btn-outline-danger" disabled
+                                                title="No se puede eliminar: tiene @c.CantidadProductos producto(s) asociado(s)">
+                                            <i class="bi bi-trash-fill"></i>
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <form asp-action="Eliminar" asp-route-id="@c.IdCategoria" method="post" class="d-inline" data-confirm="¿Eliminar esta categoría?">
+                                            <button type="submit" class="btn btn-danger" title="Eliminar">
+                                                <i class="bi bi-trash-fill"></i>
+                                            </button>
+                                        </form>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+        </div>
+    </div>
+
+    @if (verProductos.HasValue)
+    {
+        <div class="col-lg-5">
+            <div class="table-card p-3">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0">Productos: @categoriaSeleccionada?.Nombre</h5>
+                    <a asp-action="Index" asp-route-buscar="@buscar" class="btn btn-sm btn-outline-secondary" title="Cerrar">
+                        <i class="bi bi-x-lg"></i>
+                    </a>
+                </div>
+                <div class="d-flex gap-2 mb-3">
+                    <a asp-controller="Producto" asp-action="Registrar" asp-route-idCategoria="@verProductos"
+                       class="btn btn-sm btn-primary">
+                        <i class="bi bi-plus-lg me-1"></i>Nuevo producto
+                    </a>
+                    <a asp-controller="Movimiento" asp-action="Registrar" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-arrow-left-right me-1"></i>Registrar movimiento
+                    </a>
+                </div>
+                @if (productosDeCategoria == null || productosDeCategoria.Count == 0)
+                {
+                    <p class="text-muted mb-0">Esta categoría no tiene productos.</p>
+                }
+                else
+                {
+                    <input type="text" id="filtroProductosPanel" class="form-control form-control-sm mb-2"
+                           placeholder="Buscar en esta lista..." autocomplete="off" />
+                    <div style="max-height: 320px; overflow-y: auto;">
+                        <table class="table table-sm table-striped mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Nombre</th>
+                                    <th>Precio</th>
+                                    <th>Stock</th>
+                                </tr>
+                            </thead>
+                            <tbody id="filasProductosPanel">
+                                @foreach (var p in productosDeCategoria)
+                                {
+                                    <tr>
+                                        <td>
+                                            <a asp-controller="Producto" asp-action="Detalle" asp-route-id="@p.IdProducto">
+                                                @p.Nombre
+                                            </a>
+                                        </td>
+                                        <td>S/ @p.Precio.ToString("N2")</td>
+                                        <td>@p.Stock</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts
+{
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var filtro = document.getElementById('filtroProductosPanel');
+            if (!filtro) return;
+
+            filtro.addEventListener('input', function () {
+                var texto = filtro.value.trim().toLowerCase();
+                document.querySelectorAll('#filasProductosPanel tr').forEach(function (fila) {
+                    var nombre = fila.querySelector('td').textContent.toLowerCase();
+                    fila.style.display = nombre.includes(texto) ? '' : 'none';
+                });
+            });
+        });
+    </script>
+}

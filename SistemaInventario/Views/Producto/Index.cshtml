@@ -4,7 +4,16 @@
     var buscar = ViewBag.Buscar as string;
     int pagina = ViewBag.Pagina ?? 1;
     int totalPaginas = ViewBag.TotalPaginas ?? 1;
+    int total = ViewBag.Total ?? 0;
+    int inicio = ViewBag.Inicio ?? 0;
+    int fin = ViewBag.Fin ?? 0;
+    int? idCategoria = ViewBag.IdCategoria as int?;
+    var nombreCategoria = ViewBag.NombreCategoria as string;
+    int? idProveedor = ViewBag.IdProveedor as int?;
+    var nombreProveedor = ViewBag.NombreProveedor as string;
+    bool stockBajo = ViewBag.StockBajo ?? false;
     const int stockMinimo = 10;
+    bool hayFiltros = !string.IsNullOrWhiteSpace(buscar) || idCategoria.HasValue || idProveedor.HasValue || stockBajo;
 }
 
 <h1>Catálogo de productos</h1>
@@ -17,18 +26,75 @@
     </div>
 }
 
-<div class="d-flex justify-content-between mb-3 flex-wrap" style="gap:.5rem;">
-    <form method="get" class="d-flex" style="gap:.5rem;">
-        <input type="text" name="buscar" value="@buscar" class="form-control" placeholder="Buscar por nombre..." />
-        <button type="submit" class="btn btn-outline-primary">Buscar</button>
-        <a asp-action="Index" class="btn btn-outline-secondary">Limpiar</a>
-    </form>
-    <div style="gap:.5rem;" class="d-flex">
-        <a asp-action="ExportarExcel" class="btn btn-outline-success">Exportar Excel</a>
-        <a asp-action="ExportarPdf" class="btn btn-outline-danger">Exportar PDF</a>
-        <a asp-action="Registrar" class="btn btn-primary">+ Nuevo producto</a>
-    </div>
+<div class="d-flex justify-content-end mb-3 flex-wrap" style="gap:.5rem;">
+    <a asp-action="ExportarExcel" class="btn btn-outline-success">Exportar Excel</a>
+    <a asp-action="ExportarPdf" class="btn btn-outline-danger">Exportar PDF</a>
+    <a asp-action="Registrar" class="btn btn-primary">+ Nuevo producto</a>
 </div>
+
+<form method="get" class="d-flex flex-wrap align-items-center mb-3" style="gap:.5rem;">
+    <input type="text" name="buscar" value="@buscar" class="form-control" placeholder="Buscar por nombre..." style="max-width:220px;" />
+    <select name="idCategoria" class="form-select" asp-items="ViewBag.Categorias" style="max-width:220px;">
+        <option value="">Todas las categorías</option>
+    </select>
+    <select name="idProveedor" class="form-select" asp-items="ViewBag.Proveedores" style="max-width:220px;">
+        <option value="">Todos los proveedores</option>
+    </select>
+    <div class="form-check">
+        <input type="checkbox" name="stockBajo" value="true" class="form-check-input" id="stockBajoCheck" checked="@stockBajo" />
+        <label class="form-check-label" for="stockBajoCheck">Solo stock bajo</label>
+    </div>
+    <button type="submit" class="btn btn-outline-primary">Filtrar</button>
+    @if (hayFiltros)
+    {
+        <a asp-action="Index" class="btn btn-outline-secondary">Limpiar</a>
+    }
+</form>
+
+@if (hayFiltros)
+{
+    <div class="d-flex flex-wrap align-items-center mb-3" style="gap:.4rem;">
+        @if (!string.IsNullOrWhiteSpace(buscar))
+        {
+            <a asp-action="Index" asp-route-idCategoria="@idCategoria" asp-route-idProveedor="@idProveedor" asp-route-stockBajo="@stockBajo"
+               class="badge bg-secondary text-decoration-none">
+                Nombre: @buscar <i class="bi bi-x-lg ms-1"></i>
+            </a>
+        }
+        @if (idCategoria.HasValue)
+        {
+            <a asp-action="Index" asp-route-buscar="@buscar" asp-route-idProveedor="@idProveedor" asp-route-stockBajo="@stockBajo"
+               class="badge bg-secondary text-decoration-none">
+                Categoría: @nombreCategoria <i class="bi bi-x-lg ms-1"></i>
+            </a>
+        }
+        @if (idProveedor.HasValue)
+        {
+            <a asp-action="Index" asp-route-buscar="@buscar" asp-route-idCategoria="@idCategoria" asp-route-stockBajo="@stockBajo"
+               class="badge bg-secondary text-decoration-none">
+                Proveedor: @nombreProveedor <i class="bi bi-x-lg ms-1"></i>
+            </a>
+        }
+        @if (stockBajo)
+        {
+            <a asp-action="Index" asp-route-buscar="@buscar" asp-route-idCategoria="@idCategoria" asp-route-idProveedor="@idProveedor"
+               class="badge bg-danger text-decoration-none">
+                Solo stock bajo <i class="bi bi-x-lg ms-1"></i>
+            </a>
+        }
+    </div>
+}
+
+<p class="text-muted small">
+    @if (total == 0)
+    {
+        <text>No hay productos que coincidan.</text>
+    }
+    else
+    {
+        <text>Mostrando @inicio-@fin de @total producto@(total == 1 ? "" : "s")</text>
+    }
+</p>
 
 <div class="table-card">
 <table class="table table-striped table-hover">
@@ -40,7 +106,7 @@
             <th>Proveedor</th>
             <th>Precio</th>
             <th>Stock</th>
-            <th></th>
+            <th>Acciones</th>
         </tr>
     </thead>
     <tbody>
@@ -66,12 +132,14 @@
                         }
                     </td>
                     <td class="text-nowrap">
-                        <a asp-action="Detalle" asp-route-id="@p.IdProducto" class="btn btn-sm btn-outline-info">Ver</a>
-                        <a asp-action="Editar" asp-route-id="@p.IdProducto" class="btn btn-sm btn-outline-warning">Editar</a>
-                        <a asp-controller="Movimiento" asp-action="Index" asp-route-idProducto="@p.IdProducto" class="btn btn-sm btn-outline-secondary">Kardex</a>
-                        <form asp-action="Eliminar" asp-route-id="@p.IdProducto" method="post" class="d-inline" onsubmit="return confirm('¿Eliminar este producto?');">
-                            <button type="submit" class="btn btn-sm btn-outline-danger">Eliminar</button>
-                        </form>
+                        <div class="d-flex flex-wrap" style="gap:.4rem;">
+                            <a asp-action="Detalle" asp-route-id="@p.IdProducto" class="btn btn-sm btn-outline-info">Ver</a>
+                            <a asp-action="Editar" asp-route-id="@p.IdProducto" class="btn btn-sm btn-outline-warning">Editar</a>
+                            <a asp-controller="Movimiento" asp-action="Index" asp-route-idProducto="@p.IdProducto" class="btn btn-sm btn-outline-secondary">Kardex</a>
+                            <form asp-action="Eliminar" asp-route-id="@p.IdProducto" method="post" class="d-inline" data-confirm="¿Eliminar este producto?">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Eliminar</button>
+                            </form>
+                        </div>
                     </td>
                 </tr>
             }
@@ -80,7 +148,7 @@
 </table>
 </div>
 
-@if (string.IsNullOrWhiteSpace(buscar) && totalPaginas > 1)
+@if (!hayFiltros && totalPaginas > 1)
 {
     <nav>
         <ul class="pagination">

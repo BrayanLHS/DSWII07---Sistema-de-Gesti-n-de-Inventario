@@ -7,16 +7,28 @@ namespace SistemaInventario.Controllers
     public class ProveedorController : Controller
     {
         private readonly IProveedorRepositorio _repo;
+        private readonly IProductoRepositorio _productos;
 
-        public ProveedorController(IProveedorRepositorio repo)
+        public ProveedorController(IProveedorRepositorio repo, IProductoRepositorio productos)
         {
             _repo = repo;
+            _productos = productos;
         }
 
-        public IActionResult Index()
+        // GET: /Proveedor?verProductos=2 -> muestra el panel de productos de ese proveedor al costado
+        public IActionResult Index(string? buscar, int? verProductos)
         {
             ViewData["Title"] = "Proveedores";
-            return View(_repo.Listar());
+            ViewBag.Buscar = buscar;
+            ViewBag.VerProductos = verProductos;
+
+            if (verProductos.HasValue)
+            {
+                ViewBag.ProveedorSeleccionado = _repo.ObtenerPorId(verProductos.Value);
+                ViewBag.ProductosDeProveedor = _productos.Listar(idProveedor: verProductos.Value);
+            }
+
+            return View(_repo.Listar(buscar));
         }
 
         [HttpGet]
@@ -31,6 +43,18 @@ namespace SistemaInventario.Controllers
             _repo.Insertar(modelo);
             TempData["Exito"] = $"Proveedor '{modelo.Nombre}' registrado.";
             return RedirectToAction(nameof(Index));
+        }
+
+        // POST: /Proveedor/CrearRapido (AJAX) -> usado por el modal "+" en el formulario de Producto
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult CrearRapido(ProveedorViewModel modelo)
+        {
+            if (string.IsNullOrWhiteSpace(modelo.Nombre))
+                return BadRequest(new { mensaje = "El nombre es obligatorio." });
+
+            int id = _repo.Insertar(modelo);
+            return Json(new { id, nombre = modelo.Nombre });
         }
 
         [HttpGet]

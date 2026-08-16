@@ -105,5 +105,19 @@ namespace SistemaInventario.Data.Repositories
                 throw;
             }
         }
+
+        public void RegistrarStockInicial(int idProducto, int cantidad)
+        {
+            using SqlConnection cn = conexionBD.ObtenerConexion();
+            cn.Open();
+
+            using var cmd = new SqlCommand(
+                @"INSERT INTO MovimientoInventario (IdProducto, Tipo, Cantidad, Fecha, Motivo)
+                  VALUES (@IdProducto, 'Entrada', @Cantidad, @Fecha, 'Stock inicial')", cn);
+            cmd.Parameters.AddWithValue("@IdProducto", idProducto);
+            cmd.Parameters.AddWithValue("@Cantidad", cantidad);
+            cmd.Parameters.AddWithValue("@Fecha", DateTime.Now);
+            cmd.ExecuteNonQuery();
+        }
     }
 }

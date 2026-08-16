@@ -29,6 +29,8 @@ namespace SistemaInventario.Controllers
             return View(_repo.Listar(idProducto));
         }
 
+        // Registrar movimiento: esta pantalla solo maneja Salidas.
+        // Las Entradas se generan automaticamente al crear un producto con stock inicial (ProductoController.Registrar).
         [HttpGet]
         public IActionResult Registrar(int? idProducto)
         {
@@ -36,7 +38,8 @@ namespace SistemaInventario.Controllers
             return View(new MovimientoViewModel
             {
                 Fecha = DateTime.Now,
-                IdProducto = idProducto ?? 0
+                IdProducto = idProducto ?? 0,
+                Tipo = "Salida"
             });
         }
 
@@ -44,6 +47,8 @@ namespace SistemaInventario.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult Registrar(MovimientoViewModel modelo)
         {
+            modelo.Tipo = "Salida";
+
             if (!ModelState.IsValid)
             {
                 CargarProductos();
@@ -68,6 +73,7 @@ namespace SistemaInventario.Controllers
         {
             var productos = _productos.Listar();
             ViewBag.Productos = new SelectList(productos, "IdProducto", "Nombre");
+            ViewBag.StockPorProducto = productos.ToDictionary(p => p.IdProducto, p => p.Stock);
         }
     }
 }

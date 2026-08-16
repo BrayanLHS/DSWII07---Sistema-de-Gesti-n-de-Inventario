@@ -4,8 +4,8 @@
     ViewData["Title"] = "Iniciar sesión";
 }
 
-<div class="row justify-content-center mt-5">
-    <div class="col-md-5">
+<div class="row justify-content-center align-items-center" style="min-height: 75vh;">
+    <div class="col-11 col-sm-8 col-md-6" style="max-width: 420px;">
         <div class="card shadow">
             <div class="card-body p-4">
 
@@ -19,9 +19,13 @@
                     </div>
                 }
                 <form asp-action="Login" method="post">
-                    <div asp-validation-summary="ModelOnly"
-                         class="text-danger mb-3">
-                    </div>
+                    @if (!ViewData.ModelState.IsValid)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <div asp-validation-summary="ModelOnly" class="mb-0"></div>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+                        </div>
+                    }
                     <div class="mb-3">
                         <label asp-for="Correo"
                                class="form-label">

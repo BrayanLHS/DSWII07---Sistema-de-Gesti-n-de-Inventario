@@ -59,8 +59,9 @@ namespace SistemaInventario.Controllers
                 new Claim(
                     ClaimTypes.NameIdentifier,
                     usuario.IdUsuario.ToString()),
-                new Claim(ClaimTypes.Name, usuario.Nombre),
-                new Claim(ClaimTypes.Email, usuario.Correo)
+                new Claim(ClaimTypes.Name, $"{usuario.Nombre} {usuario.Apellido}".Trim()),
+                new Claim(ClaimTypes.Email, usuario.Correo),
+                new Claim(ClaimTypes.Role, usuario.Rol)
             };
             ClaimsIdentity identidad = new ClaimsIdentity(
                 claims,
@@ -68,6 +69,7 @@ namespace SistemaInventario.Controllers
             await HttpContext.SignInAsync(
                 CookieAuthenticationDefaults.AuthenticationScheme,
                 new ClaimsPrincipal(identidad));
+            TempData["Mensaje"] = "Iniciaste sesión correctamente";
             return RedirectToAction("Index", "Dashboard");
         }
         [HttpGet]
@@ -93,6 +95,7 @@ namespace SistemaInventario.Controllers
             UsuarioViewModel usuario = new UsuarioViewModel
             {
                 Nombre = modelo.Nombre,
+                Apellido = modelo.Apellido,
                 Correo = modelo.Correo
             };
             usuario.Clave =

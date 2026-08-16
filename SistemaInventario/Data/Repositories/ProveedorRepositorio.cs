@@ -13,15 +13,23 @@ namespace SistemaInventario.Data.Repositories
             this.conexionBD = conexionBD;
         }
 
-        public List<ProveedorViewModel> Listar()
+        public List<ProveedorViewModel> Listar(string? buscar = null)
         {
             var lista = new List<ProveedorViewModel>();
 
             using SqlConnection cn = conexionBD.ObtenerConexion();
             cn.Open();
 
-            using SqlCommand cmd = new SqlCommand(
-                "SELECT IdProveedor, Nombre, Contacto, Telefono FROM Proveedor ORDER BY Nombre", cn);
+            var sql = @"SELECT pr.IdProveedor, pr.Nombre, pr.Contacto, pr.Telefono, COUNT(p.IdProducto) AS CantidadProductos
+                        FROM Proveedor pr
+                        LEFT JOIN Producto p ON p.IdProveedor = pr.IdProveedor";
+            if (!string.IsNullOrWhiteSpace(buscar))
+                sql += " WHERE pr.Nombre LIKE @buscar";
+            sql += " GROUP BY pr.IdProveedor, pr.Nombre, pr.Contacto, pr.Telefono ORDER BY pr.Nombre";
+
+            using SqlCommand cmd = new SqlCommand(sql, cn);
+            if (!string.IsNullOrWhiteSpace(buscar))
+                cmd.Parameters.AddWithValue("@buscar", $"%{buscar}%");
 
             using SqlDataReader dr = cmd.ExecuteReader();
             while (dr.Read())
@@ -31,7 +39,8 @@ namespace SistemaInventario.Data.Repositories
                     IdProveedor = Convert.ToInt32(dr["IdProveedor"]),
                     Nombre = dr["Nombre"].ToString() ?? string.Empty,
                     Contacto = dr["Contacto"] as string,
-                    Telefono = dr["Telefono"] as string
+                    Telefono = dr["Telefono"] as string,
+                    CantidadProductos = Convert.ToInt32(dr["CantidadProductos"])
                 });
             }
 
@@ -62,17 +71,18 @@ namespace SistemaInventario.Data.Repositories
             return null;
         }
 
-        public void Insertar(ProveedorViewModel proveedor)
+        public int Insertar(ProveedorViewModel proveedor)
         {
             using SqlConnection cn = conexionBD.ObtenerConexion();
             cn.Open();
 
             using SqlCommand cmd = new SqlCommand(
-                "INSERT INTO Proveedor(Nombre, Contacto, Telefono) VALUES(@Nombre, @Contacto, @Telefono)", cn);
+                @"INSERT INTO Proveedor(Nombre, Contacto, Telefono) VALUES(@Nombre, @Contacto, @Telefono);
+                  SELECT CAST(SCOPE_IDENTITY() AS INT);", cn);
             cmd.Parameters.AddWithValue("@Nombre", proveedor.Nombre);
             cmd.Parameters.AddWithValue("@Contacto", (object?)proveedor.Contacto ?? DBNull.Value);
             cmd.Parameters.AddWithValue("@Telefono", (object?)proveedor.Telefono ?? DBNull.Value);
-            cmd.ExecuteNonQuery();
+            return (int)cmd.ExecuteScalar();
         }
 
         public void Actualizar(ProveedorViewModel proveedor)

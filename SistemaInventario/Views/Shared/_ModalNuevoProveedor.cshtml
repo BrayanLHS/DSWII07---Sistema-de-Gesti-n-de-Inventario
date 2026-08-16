@@ -1,0 +1,86 @@
+<div class="modal fade" id="modalNuevoProveedor" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title">Nuevo proveedor</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body pt-2">
+                <div id="nuevoProveedorError" class="alert alert-danger d-none" role="alert"></div>
+                <div class="mb-3">
+                    <label class="form-label">Nombre / Razón social</label>
+                    <input type="text" id="nuevoProveedorNombre" class="form-control" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Persona de contacto</label>
+                    <input type="text" id="nuevoProveedorContacto" class="form-control" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Teléfono</label>
+                    <input type="text" id="nuevoProveedorTelefono" class="form-control" />
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="btnGuardarNuevoProveedor">Guardar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var btnGuardar = document.getElementById('btnGuardarNuevoProveedor');
+        if (!btnGuardar) return;
+
+        btnGuardar.addEventListener('click', function () {
+            var nombre = document.getElementById('nuevoProveedorNombre').value.trim();
+            var errorBox = document.getElementById('nuevoProveedorError');
+            errorBox.classList.add('d-none');
+
+            if (!nombre) {
+                errorBox.textContent = 'El nombre es obligatorio.';
+                errorBox.classList.remove('d-none');
+                return;
+            }
+
+            var token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+            var datos = new URLSearchParams();
+            datos.append('__RequestVerificationToken', token);
+            datos.append('Nombre', nombre);
+            datos.append('Contacto', document.getElementById('nuevoProveedorContacto').value.trim());
+            datos.append('Telefono', document.getElementById('nuevoProveedorTelefono').value.trim());
+
+            btnGuardar.disabled = true;
+
+            fetch('/Proveedor/CrearRapido', { method: 'POST', body: datos })
+                .then(function (resp) {
+                    if (!resp.ok) {
+                        return resp.json().then(function (err) { throw new Error(err.mensaje || 'No se pudo crear el proveedor.'); });
+                    }
+                    return resp.json();
+                })
+                .then(function (data) {
+                    var select = document.getElementById('IdProveedor');
+                    var opcion = document.createElement('option');
+                    opcion.value = data.id;
+                    opcion.textContent = data.nombre;
+                    opcion.selected = true;
+                    select.appendChild(opcion);
+
+                    document.getElementById('nuevoProveedorNombre').value = '';
+                    document.getElementById('nuevoProveedorContacto').value = '';
+                    document.getElementById('nuevoProveedorTelefono').value = '';
+
+                    bootstrap.Modal.getOrCreateInstance(document.getElementById('modalNuevoProveedor')).hide();
+                })
+                .catch(function (err) {
+                    errorBox.textContent = err.message;
+                    errorBox.classList.remove('d-none');
+                })
+                .finally(function () {
+                    btnGuardar.disabled = false;
+                });
+        });
+    });
+</script>

@@ -71,8 +71,12 @@ CREATE TABLE Usuario
 (
     IdUsuario INT IDENTITY(1,1) PRIMARY KEY,
     Nombre VARCHAR(100) NOT NULL,
+    Apellido VARCHAR(100) NOT NULL,
     Correo VARCHAR(100) NOT NULL UNIQUE,
-    Clave VARCHAR(255) NOT NULL
+    Clave VARCHAR(255) NOT NULL,
+    Rol VARCHAR(20) NOT NULL DEFAULT 'Usuario',
+
+    CHECK (Rol IN ('Admin', 'Usuario'))
 );
 GO
 

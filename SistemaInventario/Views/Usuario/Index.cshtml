@@ -1,0 +1,67 @@
+@model List<SistemaInventario.Models.UsuarioViewModel>
+@{
+    ViewData["Title"] = "Usuarios";
+}
+
+<h1>Usuarios</h1>
+<p class="text-muted small">
+    Los roles se asignan directamente en la base de datos (Azure SQL) por otro administrador.
+    Desde aquí solo puedes ver el listado y eliminar cuentas.
+</p>
+
+@if (TempData["Exito"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["Exito"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+    </div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+    </div>
+}
+
+<div class="table-card">
+<table class="table table-striped table-hover">
+    <thead>
+        <tr>
+            <th>Id</th>
+            <th>Nombre</th>
+            <th>Apellido</th>
+            <th>Correo</th>
+            <th>Rol</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (Model == null || Model.Count == 0)
+        {
+            <tr><td colspan="6">No hay usuarios registrados.</td></tr>
+        }
+        else
+        {
+            foreach (var u in Model)
+            {
+                <tr>
+                    <td>@u.IdUsuario</td>
+                    <td>@u.Nombre</td>
+                    <td>@u.Apellido</td>
+                    <td>@u.Correo</td>
+                    <td>
+                        <span class="badge @(u.Rol == "Admin" ? "bg-primary" : "bg-secondary")">@u.Rol</span>
+                    </td>
+                    <td>
+                        <form asp-action="Eliminar" asp-route-id="@u.IdUsuario" method="post"
+                              data-confirm="¿Eliminar este usuario?">
+                            <button type="submit" class="btn btn-sm btn-outline-danger">Eliminar</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>
+</div>
