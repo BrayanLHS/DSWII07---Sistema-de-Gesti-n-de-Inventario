@@ -15,5 +15,7 @@ namespace SistemaInventario.Models
 
         [Display(Name = "Teléfono")]
         public string? Telefono { get; set; }
+
+        public int CantidadProductos { get; set; }
     }
 }

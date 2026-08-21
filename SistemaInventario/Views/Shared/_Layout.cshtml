@@ -17,7 +17,7 @@
 </head>
 <body class="d-flex flex-column min-vh-100">
     <header class="flex-shrink-0">
-        <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm py-4">
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm py-4 fixed-top">
             <div class="container-fluid px-4">
                 <a class="navbar-brand fs-4 fw-bold d-flex align-items-center"
                    asp-controller="Dashboard" asp-action="Index">
@@ -37,46 +37,59 @@
                                     Productos
                                 </a>
                             </li>
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle @EsActivo("Categoria", "Proveedor", "Movimiento")"
-                                   href="#" data-bs-toggle="dropdown">
-                                    Inventario
+                            <li class="nav-item">
+                                <a class="nav-link @EsActivo("Categoria")"
+                                   asp-controller="Categoria" asp-action="Index">
+                                    Categorías
                                 </a>
-                                <ul class="dropdown-menu dropdown-menu-dark shadow">
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link @EsActivo("Proveedor")"
+                                   asp-controller="Proveedor" asp-action="Index">
+                                    Proveedores
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link @EsActivo("Movimiento")"
+                                   asp-controller="Movimiento" asp-action="Index">
+                                    Kardex
+                                </a>
+                            </li>
+                            @if (User.IsInRole("Admin"))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link @EsActivo("Usuario")"
+                                       asp-controller="Usuario" asp-action="Index">
+                                        Usuarios
+                                    </a>
+                                </li>
+                            }
+                        </ul>
+                        <div class="d-flex align-items-center gap-3 mt-3 mt-lg-0 ms-lg-4">
+                            <div class="dropdown">
+                                <button type="button" class="btn btn-primary rounded-pill px-4 fw-semibold dropdown-toggle"
+                                        data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="bi bi-plus-lg me-1"></i>Nuevo
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark shadow">
                                     <li>
-                                        <a class="dropdown-item" asp-controller="Categoria" asp-action="Index">
-                                            Categorías
+                                        <a class="dropdown-item" asp-controller="Producto" asp-action="Registrar">
+                                            <i class="bi bi-box-seam me-2"></i>Nuevo producto
                                         </a>
                                     </li>
                                     <li>
-                                        <a class="dropdown-item" asp-controller="Proveedor" asp-action="Index">
-                                            Proveedores
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item" asp-controller="Movimiento" asp-action="Index">
-                                            Kardex
+                                        <a class="dropdown-item" asp-controller="Movimiento" asp-action="Registrar">
+                                            <i class="bi bi-arrow-left-right me-2"></i>Registrar movimiento
                                         </a>
                                     </li>
                                 </ul>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link @EsActivo("Cliente")"
-                                   asp-controller="Cliente" asp-action="Index">
-                                    Cliente API
-                                </a>
-                            </li>
-                        </ul>
-                        <div class="d-flex align-items-center gap-2 mt-3 mt-lg-0 ms-lg-4">
-                            <span class="text-white">Hola @User.Identity.Name</span>
-
-                            <a asp-controller="Producto" asp-action="Registrar"
-                               class="btn btn-primary rounded-pill px-4 fw-semibold">
-                                Nuevo producto
-                            </a>
+                            </div>
+                            <span class="text-white-50 small d-none d-lg-inline">
+                                <i class="bi bi-person-fill me-1"></i>@User.Identity.Name
+                            </span>
                             <form asp-controller="Cuenta" asp-action="Logout" method="post">
-                                <button type="submit" class="btn btn-outline-light rounded-pill">
-                                    Cerrar sesión
+                                <button type="submit" class="btn btn-link text-white-50 p-0" title="Cerrar sesión">
+                                    <i class="bi bi-box-arrow-right fs-5"></i>
                                 </button>
                             </form>
                         </div>
@@ -85,10 +98,34 @@
             </div>
         </nav>
     </header>
-    <div class="container-fluid px-4 flex-grow-1">
+    <div class="container-fluid px-4 flex-grow-1" style="padding-bottom: 70px; padding-top: 96px;">
         <main role="main" class="pt-4 pb-5">
             @RenderBody()
         </main>
+    </div>
+    <div class="modal fade" id="modalConfirmar" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title d-flex align-items-center">
+                        <span class="kpi-icon bg-danger-subtle text-danger me-2">
+                            <i class="bi bi-exclamation-triangle-fill"></i>
+                        </span>
+                        Confirmar acción
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body pt-2" id="modalConfirmarMensaje"></div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">
+                        Cancelar
+                    </button>
+                    <button type="button" class="btn btn-danger rounded-pill px-4" id="modalConfirmarAceptar">
+                        Sí, eliminar
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
     <footer class="footer-app flex-shrink-0">
         <div class="container-fluid px-4 py-3 d-flex align-items-center">
@@ -102,10 +139,35 @@
     <script src="~/js/site.js" asp-append-version="true"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            document.querySelectorAll('.alert-success').forEach(function (alerta) {
+            document.querySelectorAll('.alert-success, .alert-danger').forEach(function (alerta) {
+                if (alerta.closest('.modal')) return;
                 setTimeout(function () {
                     bootstrap.Alert.getOrCreateInstance(alerta).close();
                 }, 3000);
+            });
+
+            var modalConfirmarEl = document.getElementById('modalConfirmar');
+            var modalConfirmar = new bootstrap.Modal(modalConfirmarEl);
+            var mensajeConfirmar = document.getElementById('modalConfirmarMensaje');
+            var btnAceptarConfirmar = document.getElementById('modalConfirmarAceptar');
+            var formPendiente = null;
+
+            document.addEventListener('submit', function (evento) {
+                var form = evento.target;
+                if (form.hasAttribute('data-confirm')) {
+                    evento.preventDefault();
+                    formPendiente = form;
+                    mensajeConfirmar.textContent = form.getAttribute('data-confirm');
+                    btnAceptarConfirmar.textContent = form.getAttribute('data-confirm-btn') || 'Sí, eliminar';
+                    modalConfirmar.show();
+                }
+            });
+
+            btnAceptarConfirmar.addEventListener('click', function () {
+                modalConfirmar.hide();
+                if (formPendiente) {
+                    formPendiente.submit();
+                }
             });
         });
     </script>

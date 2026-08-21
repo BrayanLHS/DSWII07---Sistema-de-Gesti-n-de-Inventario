@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using SistemaInventario.Data.Repositories;
 using SistemaInventario.Models;
 
@@ -25,6 +26,7 @@ namespace SistemaInventario.Controllers
         }
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [EnableRateLimiting("login")]
         public async Task<IActionResult> Login(LoginViewModel modelo)
         {
             if (!ModelState.IsValid)
@@ -38,7 +40,6 @@ namespace SistemaInventario.Controllers
                 ModelState.AddModelError(
                     string.Empty,
                     "Correo o contraseña incorrectos");
-
                 return View(modelo);
             }
             PasswordVerificationResult resultado =
@@ -51,7 +52,13 @@ namespace SistemaInventario.Controllers
                 ModelState.AddModelError(
                     string.Empty,
                     "Correo o contraseña incorrectos");
-
+                return View(modelo);
+            }
+            if (!usuario.Activo)
+            {
+                ModelState.AddModelError(
+                    string.Empty,
+                    "Tu cuenta está desactivada. Contacta a un administrador.");
                 return View(modelo);
             }
             List<Claim> claims = new List<Claim>
@@ -59,8 +66,9 @@ namespace SistemaInventario.Controllers
                 new Claim(
                     ClaimTypes.NameIdentifier,
                     usuario.IdUsuario.ToString()),
-                new Claim(ClaimTypes.Name, usuario.Nombre),
-                new Claim(ClaimTypes.Email, usuario.Correo)
+                new Claim(ClaimTypes.Name, $"{usuario.Nombre} {usuario.Apellido}".Trim()),
+                new Claim(ClaimTypes.Email, usuario.Correo),
+                new Claim(ClaimTypes.Role, usuario.Rol)
             };
             ClaimsIdentity identidad = new ClaimsIdentity(
                 claims,
@@ -68,6 +76,7 @@ namespace SistemaInventario.Controllers
             await HttpContext.SignInAsync(
                 CookieAuthenticationDefaults.AuthenticationScheme,
                 new ClaimsPrincipal(identidad));
+            TempData["Mensaje"] = "Iniciaste sesión correctamente";
             return RedirectToAction("Index", "Dashboard");
         }
         [HttpGet]
@@ -93,6 +102,7 @@ namespace SistemaInventario.Controllers
             UsuarioViewModel usuario = new UsuarioViewModel
             {
                 Nombre = modelo.Nombre,
+                Apellido = modelo.Apellido,
                 Correo = modelo.Correo
             };
             usuario.Clave =

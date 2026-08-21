@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using SistemaInventario.Data.Interfaces;
@@ -5,7 +6,7 @@ using SistemaInventario.Models;
 
 namespace SistemaInventario.Controllers
 {
-    // Kardex: entradas y salidas de inventario, ligadas a un producto.
+    [Authorize]
     public class MovimientoController : Controller
     {
         private readonly IMovimientoRepositorio _repo;
@@ -17,16 +18,20 @@ namespace SistemaInventario.Controllers
             _productos = productos;
         }
 
-        // GET: /Movimiento?idProducto=5
-        public IActionResult Index(int? idProducto)
+        public IActionResult Index(int? idProducto, int pagina = 1)
         {
+            const int tamano = 10;
+
             ViewData["Title"] = "Kardex de movimientos";
             ViewBag.IdProducto = idProducto;
-
             if (idProducto.HasValue)
                 ViewBag.Producto = _productos.ObtenerPorId(idProducto.Value);
 
-            return View(_repo.Listar(idProducto));
+            var movimientos = _repo.ListarPaginado(idProducto, pagina, tamano, out int total);
+            ViewBag.Pagina = pagina;
+            ViewBag.TotalPaginas = (int)Math.Ceiling(total / (double)tamano);
+
+            return View(movimientos);
         }
 
         [HttpGet]
@@ -36,7 +41,8 @@ namespace SistemaInventario.Controllers
             return View(new MovimientoViewModel
             {
                 Fecha = DateTime.Now,
-                IdProducto = idProducto ?? 0
+                IdProducto = idProducto ?? 0,
+                Tipo = "Salida"
             });
         }
 
@@ -44,6 +50,8 @@ namespace SistemaInventario.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult Registrar(MovimientoViewModel modelo)
         {
+            modelo.Tipo = "Salida";
+
             if (!ModelState.IsValid)
             {
                 CargarProductos();
@@ -68,6 +76,7 @@ namespace SistemaInventario.Controllers
         {
             var productos = _productos.Listar();
             ViewBag.Productos = new SelectList(productos, "IdProducto", "Nombre");
+            ViewBag.StockPorProducto = productos.ToDictionary(p => p.IdProducto, p => p.Stock);
         }
     }
 }

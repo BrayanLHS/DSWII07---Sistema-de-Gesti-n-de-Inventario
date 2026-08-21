@@ -1,0 +1,45 @@
+@model SistemaInventario.Models.UsuarioViewModel
+@{
+    ViewData["Title"] = "Detalle de usuario";
+}
+
+<h1>Detalle de usuario</h1>
+
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="table-card p-4">
+            <dl class="row mb-0">
+                <dt class="col-sm-4">Nombre</dt>
+                <dd class="col-sm-8">@Model.Nombre</dd>
+
+                <dt class="col-sm-4">Apellido</dt>
+                <dd class="col-sm-8">@Model.Apellido</dd>
+
+                <dt class="col-sm-4">Correo</dt>
+                <dd class="col-sm-8">@Model.Correo</dd>
+
+                <dt class="col-sm-4">Rol</dt>
+                <dd class="col-sm-8">
+                    <span class="badge @(Model.Rol == "Admin" ? "bg-primary" : "bg-secondary")">@Model.Rol</span>
+                </dd>
+
+                <dt class="col-sm-4">Estado</dt>
+                <dd class="col-sm-8">
+                    <span class="badge @(Model.Activo ? "bg-success" : "bg-secondary")">
+                        @(Model.Activo ? "Activo" : "Desactivado")
+                    </span>
+                </dd>
+
+                <dt class="col-sm-4">Fecha de registro</dt>
+                <dd class="col-sm-8">@Model.FechaRegistro.ToString("dd/MM/yyyy HH:mm")</dd>
+            </dl>
+
+            <div class="d-flex mt-4" style="gap:.5rem;">
+                <a asp-action="Editar" asp-route-id="@Model.IdUsuario" class="btn btn-warning text-white">
+                    <i class="bi bi-pencil-fill me-1"></i>Editar
+                </a>
+                <a asp-action="Index" class="btn btn-outline-secondary">Volver</a>
+            </div>
+        </div>
+    </div>
+</div>

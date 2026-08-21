@@ -1,46 +1,105 @@
 @model SistemaInventario.Models.MovimientoViewModel
 @{
     ViewData["Title"] = "Registrar movimiento";
+    var stockPorProducto = ViewBag.StockPorProducto as Dictionary<int, int>;
 }
 
-<h1>Registrar movimiento de inventario</h1>
+<h1>Registrar salida de inventario</h1>
+<p class="text-muted">
+    Esta pantalla registra salidas de stock (ventas, consumo, ajustes negativos).
+    Las entradas se generan automáticamente al registrar un producto nuevo con stock inicial.
+</p>
 
-<form asp-action="Registrar" method="post">
-    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+        <div class="table-card p-4">
+            <form asp-action="Registrar" method="post">
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
-    <div class="form-group mb-3">
-        <label asp-for="IdProducto" class="control-label"></label>
-        <select asp-for="IdProducto" class="form-select" asp-items="ViewBag.Productos">
-            <option value="">-- Selecciona un producto --</option>
-        </select>
-        <span asp-validation-for="IdProducto" class="text-danger"></span>
+                <div class="form-group mb-3">
+                    <label asp-for="IdProducto" class="control-label"></label>
+                    <select asp-for="IdProducto" id="selectProducto" class="form-select" asp-items="ViewBag.Productos">
+                        <option value="">-- Selecciona un producto --</option>
+                    </select>
+                    <span asp-validation-for="IdProducto" class="text-danger"></span>
+                    <div class="form-text" id="stockActualTexto">Stock actual: —</div>
+                </div>
+
+                <input type="hidden" asp-for="Tipo" />
+                <div class="form-group mb-3">
+                    <label class="control-label d-block">Tipo de movimiento</label>
+                    <span class="btn btn-danger disabled">
+                        <i class="bi bi-box-arrow-up-right me-1"></i>Salida
+                    </span>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label asp-for="Cantidad" class="control-label"></label>
+                    <input asp-for="Cantidad" type="number" min="1" id="inputCantidad" class="form-control" />
+                    <span asp-validation-for="Cantidad" class="text-danger"></span>
+                    <div class="form-text" id="previewTexto"></div>
+                </div>
+
+                <div class="form-group mb-4">
+                    <label asp-for="Motivo" class="control-label"></label>
+                    <input asp-for="Motivo" class="form-control" placeholder="Ej: Venta a cliente, compra a proveedor, ajuste de inventario..." />
+                    <span asp-validation-for="Motivo" class="text-danger"></span>
+                </div>
+
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-lg me-1"></i>Registrar
+                </button>
+                <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+            </form>
+        </div>
     </div>
-
-    <div class="form-group mb-3">
-        <label asp-for="Tipo" class="control-label"></label>
-        <select asp-for="Tipo" class="form-select">
-            <option value="Entrada">Entrada</option>
-            <option value="Salida">Salida</option>
-        </select>
-        <span asp-validation-for="Tipo" class="text-danger"></span>
-    </div>
-
-    <div class="form-group mb-3">
-        <label asp-for="Cantidad" class="control-label"></label>
-        <input asp-for="Cantidad" class="form-control" />
-        <span asp-validation-for="Cantidad" class="text-danger"></span>
-    </div>
-
-    <div class="form-group mb-3">
-        <label asp-for="Motivo" class="control-label"></label>
-        <input asp-for="Motivo" class="form-control" placeholder="Ej: Compra a proveedor, venta, ajuste de inventario..." />
-        <span asp-validation-for="Motivo" class="text-danger"></span>
-    </div>
-
-    <button type="submit" class="btn btn-primary">Registrar</button>
-    <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
-</form>
+</div>
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        var stockPorProducto = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(stockPorProducto ?? new Dictionary<int, int>()));
+
+        document.addEventListener('DOMContentLoaded', function () {
+            var selectProducto = document.getElementById('selectProducto');
+            var inputCantidad = document.getElementById('inputCantidad');
+            var stockActualTexto = document.getElementById('stockActualTexto');
+            var previewTexto = document.getElementById('previewTexto');
+
+            function stockDelProductoSeleccionado() {
+                var id = selectProducto.value;
+                return (id && stockPorProducto.hasOwnProperty(id)) ? stockPorProducto[id] : null;
+            }
+
+            function actualizarVista() {
+                var stock = stockDelProductoSeleccionado();
+
+                if (stock === null) {
+                    stockActualTexto.textContent = 'Stock actual: —';
+                    previewTexto.textContent = '';
+                    previewTexto.classList.remove('text-danger');
+                    return;
+                }
+
+                stockActualTexto.textContent = 'Stock actual: ' + stock + ' unidades';
+
+                var cantidad = parseInt(inputCantidad.value, 10);
+                if (!cantidad || cantidad < 1) {
+                    previewTexto.textContent = '';
+                    previewTexto.classList.remove('text-danger');
+                    return;
+                }
+
+                var resultado = stock - cantidad;
+
+                previewTexto.textContent = 'Después de esta salida: ' + resultado + ' unidades';
+                previewTexto.classList.toggle('text-danger', resultado < 0);
+            }
+
+            selectProducto.addEventListener('change', actualizarVista);
+            inputCantidad.addEventListener('input', actualizarVista);
+
+            actualizarVista();
+        });
+    </script>
 }

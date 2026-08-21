@@ -1,4 +1,5 @@
 using ClosedXML.Excel;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using QuestPDF.Fluent;
@@ -8,33 +9,40 @@ using SistemaInventario.Models;
 
 namespace SistemaInventario.Controllers
 {
+    [Authorize]
     public class ProductoController : Controller
     {
         private readonly IProductoRepositorio _repo;
         private readonly ICategoriaRepositorio _categorias;
         private readonly IProveedorRepositorio _proveedores;
+        private readonly IMovimientoRepositorio _movimientos;
 
         public ProductoController(
             IProductoRepositorio repo,
             ICategoriaRepositorio categorias,
-            IProveedorRepositorio proveedores)
+            IProveedorRepositorio proveedores,
+            IMovimientoRepositorio movimientos)
         {
             _repo = repo;
             _categorias = categorias;
             _proveedores = proveedores;
+            _movimientos = movimientos;
         }
 
-        // GET: /Producto?buscar=teclado&pagina=1
-        public IActionResult Index(string? buscar, int pagina = 1)
+        public IActionResult Index(string? buscar, int pagina = 1, int? idCategoria = null, int? idProveedor = null, bool stockBajo = false)
         {
             const int tamano = 8;
+            const int stockMinimo = 10;
             List<ProductoViewModel> productos;
             int total;
 
-            if (!string.IsNullOrWhiteSpace(buscar))
+            bool hayFiltros = !string.IsNullOrWhiteSpace(buscar) || idCategoria.HasValue || idProveedor.HasValue || stockBajo;
+
+            if (hayFiltros)
             {
-                productos = _repo.Listar(buscar);
+                productos = _repo.Listar(buscar, idCategoria, idProveedor, stockBajo ? stockMinimo : (int?)null);
                 total = productos.Count;
+                pagina = 1;
             }
             else
             {
@@ -43,28 +51,37 @@ namespace SistemaInventario.Controllers
 
             ViewBag.Buscar = buscar;
             ViewBag.Pagina = pagina;
-            ViewBag.TotalPaginas = (int)Math.Ceiling(total / (double)tamano);
+            ViewBag.TotalPaginas = hayFiltros ? 1 : (int)Math.Ceiling(total / (double)tamano);
+            ViewBag.Total = total;
+            ViewBag.Inicio = total == 0 ? 0 : (hayFiltros ? 1 : (pagina - 1) * tamano + 1);
+            ViewBag.Fin = hayFiltros ? total : Math.Min(pagina * tamano, total);
+            ViewBag.IdCategoria = idCategoria;
+            ViewBag.NombreCategoria = idCategoria.HasValue ? _categorias.ObtenerPorId(idCategoria.Value)?.Nombre : null;
+            ViewBag.IdProveedor = idProveedor;
+            ViewBag.NombreProveedor = idProveedor.HasValue ? _proveedores.ObtenerPorId(idProveedor.Value)?.Nombre : null;
+            ViewBag.StockBajo = stockBajo;
+            CargarListas(idCategoria, idProveedor);
             ViewData["Title"] = "Catálogo de productos";
 
             return View(productos);
         }
 
-        // GET: /Producto/Detalle/5
         public IActionResult Detalle(int id)
         {
             var producto = _repo.ObtenerPorId(id);
             return producto == null ? NotFound() : View(producto);
         }
 
-        // GET: /Producto/Registrar
         [HttpGet]
-        public IActionResult Registrar()
+        public IActionResult Registrar(int? idCategoria)
         {
             CargarListas();
-            return View();
+            var modelo = idCategoria.HasValue
+                ? new ProductoViewModel { IdCategoria = idCategoria.Value }
+                : null;
+            return View(modelo);
         }
 
-        // POST: /Producto/Registrar
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Registrar(ProductoViewModel modelo)
@@ -75,12 +92,16 @@ namespace SistemaInventario.Controllers
                 return View(modelo);
             }
 
-            _repo.Insertar(modelo);
+            int idProducto = _repo.Insertar(modelo);
+
+            if (modelo.Stock > 0)
+                _movimientos.RegistrarStockInicial(idProducto, modelo.Stock);
+
             TempData["Exito"] = $"Producto '{modelo.Nombre}' registrado correctamente.";
             return RedirectToAction(nameof(Index));
         }
 
-        // GET: /Producto/Editar/5
+
         [HttpGet]
         public IActionResult Editar(int id)
         {
@@ -91,7 +112,6 @@ namespace SistemaInventario.Controllers
             return View(producto);
         }
 
-        // POST: /Producto/Editar
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Editar(ProductoViewModel modelo)
@@ -107,7 +127,6 @@ namespace SistemaInventario.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // POST: /Producto/Eliminar/5
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Eliminar(int id)
@@ -117,7 +136,6 @@ namespace SistemaInventario.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // GET: /Producto/ExportarExcel
         public IActionResult ExportarExcel()
         {
             var productos = _repo.Listar();
@@ -155,7 +173,6 @@ namespace SistemaInventario.Controllers
                 $"Productos_{DateTime.Now:yyyyMMdd_HHmm}.xlsx");
         }
 
-        // GET: /Producto/ExportarPdf
         public IActionResult ExportarPdf()
         {
             var productos = _repo.Listar();
@@ -215,10 +232,10 @@ namespace SistemaInventario.Controllers
             return File(pdfBytes, "application/pdf", $"Productos_{DateTime.Now:yyyyMMdd_HHmm}.pdf");
         }
 
-        private void CargarListas()
+        private void CargarListas(int? idCategoriaSel = null, int? idProveedorSel = null)
         {
-            ViewBag.Categorias = new SelectList(_categorias.Listar(), "IdCategoria", "Nombre");
-            ViewBag.Proveedores = new SelectList(_proveedores.Listar(), "IdProveedor", "Nombre");
+            ViewBag.Categorias = new SelectList(_categorias.Listar(), "IdCategoria", "Nombre", idCategoriaSel);
+            ViewBag.Proveedores = new SelectList(_proveedores.Listar(), "IdProveedor", "Nombre", idProveedorSel);
         }
     }
 }

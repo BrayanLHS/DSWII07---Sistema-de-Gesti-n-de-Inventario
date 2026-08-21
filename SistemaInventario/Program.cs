@@ -1,4 +1,6 @@
+using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.RateLimiting;
 using SistemaInventario.Data;
 using SistemaInventario.Data.Interfaces;
 using SistemaInventario.Data.Repositories;
@@ -21,18 +23,24 @@ builder.Services.AddAuthentication(
         opciones.LoginPath = "/Cuenta/Login";
         opciones.AccessDeniedPath = "/Cuenta/Login";
     });
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("PermitirTodo", policy =>
-        policy.AllowAnyOrigin()
-              .AllowAnyHeader()
-              .AllowAnyMethod());
-});
 builder.Services.AddHttpClient("api", cliente =>
 {
     var baseUrl = builder.Configuration["ApiBaseUrl"]
         ?? "http://localhost:5012/";
     cliente.BaseAddress = new Uri(baseUrl);
+});
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddPolicy("login", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "sin-ip",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 5,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            }));
 });
 var app = builder.Build();
 if (!app.Environment.IsDevelopment())
@@ -43,7 +51,7 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
-app.UseCors("PermitirTodo");
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllerRoute(

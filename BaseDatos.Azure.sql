@@ -1,13 +1,5 @@
---Base de datos--
 
-IF DB_ID('SistemaInventario') IS NULL
-BEGIN
-    CREATE DATABASE SistemaInventario;
-END;
-GO
-
-USE SistemaInventario;
-GO
+-- Script de base de datos: SistemaInventario
 
 CREATE TABLE Categoria
 (
@@ -64,6 +56,21 @@ CREATE TABLE MovimientoInventario
 );
 GO
 
+CREATE TABLE Usuario
+(
+    IdUsuario INT IDENTITY(1,1) PRIMARY KEY,
+    Nombre VARCHAR(100) NOT NULL,
+    Apellido VARCHAR(100) NOT NULL,
+    Correo VARCHAR(100) NOT NULL UNIQUE,
+    Clave VARCHAR(255) NOT NULL,
+    Rol VARCHAR(20) NOT NULL DEFAULT 'Usuario',
+    Activo BIT NOT NULL DEFAULT 1,
+    FechaRegistro DATETIME2 NOT NULL DEFAULT GETDATE(),
+
+    CHECK (Rol IN ('Admin', 'Usuario'))
+);
+GO
+
 INSERT INTO Categoria (Nombre)
 VALUES
 ('Computadoras'),
@@ -100,15 +107,5 @@ SELECT * FROM Categoria;
 SELECT * FROM Proveedor;
 SELECT * FROM Producto;
 SELECT * FROM MovimientoInventario;
-GO
-
-CREATE TABLE Usuario
-(
-    IdUsuario INT IDENTITY(1,1) PRIMARY KEY,
-    Nombre VARCHAR(100) NOT NULL,
-    Correo VARCHAR(100) NOT NULL UNIQUE,
-    Clave VARCHAR(255) NOT NULL
-);
-GO
-
 SELECT * FROM Usuario;
+GO

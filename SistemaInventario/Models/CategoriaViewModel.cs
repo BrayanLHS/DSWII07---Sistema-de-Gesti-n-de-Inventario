@@ -9,5 +9,7 @@ namespace SistemaInventario.Models
         [Required(ErrorMessage = "El nombre de la categoría es obligatorio")]
         [Display(Name = "Nombre")]
         public string Nombre { get; set; } = string.Empty;
+
+        public int CantidadProductos { get; set; }
     }
 }
