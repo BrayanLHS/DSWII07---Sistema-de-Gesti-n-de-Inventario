@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using SistemaInventario.Data.Interfaces;
@@ -5,7 +6,7 @@ using SistemaInventario.Models;
 
 namespace SistemaInventario.Controllers
 {
-    // Kardex: entradas y salidas de inventario, ligadas a un producto.
+    [Authorize]
     public class MovimientoController : Controller
     {
         private readonly IMovimientoRepositorio _repo;
@@ -17,20 +18,22 @@ namespace SistemaInventario.Controllers
             _productos = productos;
         }
 
-        // GET: /Movimiento?idProducto=5
-        public IActionResult Index(int? idProducto)
+        public IActionResult Index(int? idProducto, int pagina = 1)
         {
+            const int tamano = 10;
+
             ViewData["Title"] = "Kardex de movimientos";
             ViewBag.IdProducto = idProducto;
-
             if (idProducto.HasValue)
                 ViewBag.Producto = _productos.ObtenerPorId(idProducto.Value);
 
-            return View(_repo.Listar(idProducto));
+            var movimientos = _repo.ListarPaginado(idProducto, pagina, tamano, out int total);
+            ViewBag.Pagina = pagina;
+            ViewBag.TotalPaginas = (int)Math.Ceiling(total / (double)tamano);
+
+            return View(movimientos);
         }
 
-        // Registrar movimiento: esta pantalla solo maneja Salidas.
-        // Las Entradas se generan automaticamente al crear un producto con stock inicial (ProductoController.Registrar).
         [HttpGet]
         public IActionResult Registrar(int? idProducto)
         {

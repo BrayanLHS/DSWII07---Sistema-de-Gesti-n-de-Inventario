@@ -64,6 +64,10 @@
                             </td>
                             <td>
                                 <div class="btn-group btn-group-sm" role="group">
+                                    <a asp-action="Index" asp-route-buscar="@buscar" asp-route-verProductos="@c.IdCategoria"
+                                       class="btn btn-outline-info" title="Ver productos">
+                                        <i class="bi bi-eye-fill"></i>
+                                    </a>
                                     <a asp-action="Editar" asp-route-id="@c.IdCategoria" class="btn btn-warning text-white" title="Editar">
                                         <i class="bi bi-pencil-fill"></i>
                                     </a>

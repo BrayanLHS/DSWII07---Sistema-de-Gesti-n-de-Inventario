@@ -1,9 +1,11 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SistemaInventario.Data.Interfaces;
 using SistemaInventario.Models;
 
 namespace SistemaInventario.Controllers
 {
+    [Authorize]
     public class CategoriaController : Controller
     {
         private readonly ICategoriaRepositorio _repo;
@@ -14,20 +16,16 @@ namespace SistemaInventario.Controllers
             _repo = repo;
             _productos = productos;
         }
-
-        // GET: /Categoria?verProductos=3 -> muestra el panel de productos de esa categoria al costado
         public IActionResult Index(string? buscar, int? verProductos)
         {
             ViewData["Title"] = "Categorías";
             ViewBag.Buscar = buscar;
             ViewBag.VerProductos = verProductos;
-
             if (verProductos.HasValue)
             {
                 ViewBag.CategoriaSeleccionada = _repo.ObtenerPorId(verProductos.Value);
                 ViewBag.ProductosDeCategoria = _productos.Listar(idCategoria: verProductos.Value);
             }
-
             return View(_repo.Listar(buscar));
         }
 
@@ -39,7 +37,6 @@ namespace SistemaInventario.Controllers
         public IActionResult Registrar(CategoriaViewModel modelo)
         {
             if (!ModelState.IsValid) return View(modelo);
-
             _repo.Insertar(modelo);
             TempData["Exito"] = $"Categoría '{modelo.Nombre}' registrada.";
             return RedirectToAction(nameof(Index));
@@ -57,7 +54,6 @@ namespace SistemaInventario.Controllers
         public IActionResult Editar(CategoriaViewModel modelo)
         {
             if (!ModelState.IsValid) return View(modelo);
-
             _repo.Actualizar(modelo);
             TempData["Exito"] = $"Categoría '{modelo.Nombre}' actualizada.";
             return RedirectToAction(nameof(Index));

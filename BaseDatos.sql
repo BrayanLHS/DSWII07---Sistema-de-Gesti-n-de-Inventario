@@ -1,7 +1,5 @@
--- ============================================
 -- Script de base de datos: SistemaInventario
--- Ejecutar en SQL Server (SSMS) conectado a: DESKTOP-U5QC7VO\MISQLSERVER
--- ============================================
+-- Ejecutar en SQL Server
 
 IF DB_ID('SistemaInventario') IS NULL
 BEGIN
@@ -75,6 +73,8 @@ CREATE TABLE Usuario
     Correo VARCHAR(100) NOT NULL UNIQUE,
     Clave VARCHAR(255) NOT NULL,
     Rol VARCHAR(20) NOT NULL DEFAULT 'Usuario',
+    Activo BIT NOT NULL DEFAULT 1,
+    FechaRegistro DATETIME2 NOT NULL DEFAULT GETDATE(),
 
     CHECK (Rol IN ('Admin', 'Usuario'))
 );

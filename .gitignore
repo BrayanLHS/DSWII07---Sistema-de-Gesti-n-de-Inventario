@@ -1,6 +1,8 @@
 ## Carpetas de compilación de .NET
 bin/
 obj/
+publish/
+**/publish/
 
 ## Archivos de Visual Studio / Rider
 .vs/

@@ -1,9 +1,11 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SistemaInventario.Data.Interfaces;
 using SistemaInventario.Models;
 
 namespace SistemaInventario.Controllers
 {
+    [Authorize]
     public class ProveedorController : Controller
     {
         private readonly IProveedorRepositorio _repo;
@@ -14,8 +16,6 @@ namespace SistemaInventario.Controllers
             _repo = repo;
             _productos = productos;
         }
-
-        // GET: /Proveedor?verProductos=2 -> muestra el panel de productos de ese proveedor al costado
         public IActionResult Index(string? buscar, int? verProductos)
         {
             ViewData["Title"] = "Proveedores";
@@ -27,7 +27,6 @@ namespace SistemaInventario.Controllers
                 ViewBag.ProveedorSeleccionado = _repo.ObtenerPorId(verProductos.Value);
                 ViewBag.ProductosDeProveedor = _productos.Listar(idProveedor: verProductos.Value);
             }
-
             return View(_repo.Listar(buscar));
         }
 
@@ -45,7 +44,6 @@ namespace SistemaInventario.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // POST: /Proveedor/CrearRapido (AJAX) -> usado por el modal "+" en el formulario de Producto
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult CrearRapido(ProveedorViewModel modelo)

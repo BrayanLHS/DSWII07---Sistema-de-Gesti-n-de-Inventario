@@ -3,6 +3,8 @@
     ViewData["Title"] = "Kardex de movimientos";
     int? idProducto = ViewBag.IdProducto;
     var producto = ViewBag.Producto as SistemaInventario.Models.ProductoViewModel;
+    int pagina = ViewBag.Pagina ?? 1;
+    int totalPaginas = ViewBag.TotalPaginas ?? 1;
 }
 
 <h1>Kardex de movimientos</h1>
@@ -63,3 +65,17 @@
     </tbody>
 </table>
 </div>
+
+@if (totalPaginas > 1)
+{
+    <nav>
+        <ul class="pagination">
+            @for (int i = 1; i <= totalPaginas; i++)
+            {
+                <li class="page-item @(i == pagina ? "active" : "")">
+                    <a class="page-link" asp-action="Index" asp-route-pagina="@i" asp-route-idProducto="@idProducto">@i</a>
+                </li>
+            }
+        </ul>
+    </nav>
+}

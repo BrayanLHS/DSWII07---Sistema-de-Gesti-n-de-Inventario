@@ -1,12 +1,15 @@
+@using System.Security.Claims
 @model List<SistemaInventario.Models.UsuarioViewModel>
 @{
     ViewData["Title"] = "Usuarios";
+    var buscar = ViewBag.Buscar as string;
+    var idUsuarioActual = User.FindFirstValue(ClaimTypes.NameIdentifier);
 }
 
 <h1>Usuarios</h1>
 <p class="text-muted small">
     Los roles se asignan directamente en la base de datos (Azure SQL) por otro administrador.
-    Desde aquí solo puedes ver el listado y eliminar cuentas.
+    Desde aquí puedes ver el listado, editar datos, activar/desactivar cuentas y resetear contraseñas.
 </p>
 
 @if (TempData["Exito"] != null)
@@ -23,30 +26,46 @@
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
     </div>
 }
+@if (TempData["ClaveTemporal"] != null)
+{
+    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+        <i class="bi bi-key-fill me-1"></i>
+        @TempData["ClaveTemporal"]
+        <br />
+        <small>Cópiala y compártela con el usuario — no se volverá a mostrar.</small>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+    </div>
+}
+
+<form method="get" class="d-flex mb-3" style="gap:.5rem;">
+    <input type="text" name="buscar" value="@buscar" class="form-control" placeholder="Buscar por nombre, apellido o correo..." style="max-width:320px;" />
+    <button type="submit" class="btn btn-outline-primary">Buscar</button>
+    <a asp-action="Index" class="btn btn-outline-secondary">Limpiar</a>
+</form>
 
 <div class="table-card">
 <table class="table table-striped table-hover">
     <thead>
         <tr>
-            <th>Id</th>
             <th>Nombre</th>
             <th>Apellido</th>
             <th>Correo</th>
             <th>Rol</th>
-            <th></th>
+            <th>Estado</th>
+            <th>Registrado</th>
+            <th>Acciones</th>
         </tr>
     </thead>
     <tbody>
         @if (Model == null || Model.Count == 0)
         {
-            <tr><td colspan="6">No hay usuarios registrados.</td></tr>
+            <tr><td colspan="7">No hay usuarios registrados.</td></tr>
         }
         else
         {
             foreach (var u in Model)
             {
-                <tr>
-                    <td>@u.IdUsuario</td>
+                <tr class="@(!u.Activo ? "table-secondary" : "")">
                     <td>@u.Nombre</td>
                     <td>@u.Apellido</td>
                     <td>@u.Correo</td>
@@ -54,10 +73,60 @@
                         <span class="badge @(u.Rol == "Admin" ? "bg-primary" : "bg-secondary")">@u.Rol</span>
                     </td>
                     <td>
-                        <form asp-action="Eliminar" asp-route-id="@u.IdUsuario" method="post"
-                              data-confirm="¿Eliminar este usuario?">
-                            <button type="submit" class="btn btn-sm btn-outline-danger">Eliminar</button>
-                        </form>
+                        <span class="badge @(u.Activo ? "bg-success" : "bg-secondary")">
+                            @(u.Activo ? "Activo" : "Desactivado")
+                        </span>
+                    </td>
+                    <td>@u.FechaRegistro.ToString("dd/MM/yyyy")</td>
+                    <td>
+                        <div class="btn-group btn-group-sm" role="group">
+                            <a asp-action="Detalle" asp-route-id="@u.IdUsuario" class="btn btn-outline-info" title="Ver">
+                                <i class="bi bi-eye-fill"></i>
+                            </a>
+                            <a asp-action="Editar" asp-route-id="@u.IdUsuario" class="btn btn-warning text-white" title="Editar">
+                                <i class="bi bi-pencil-fill"></i>
+                            </a>
+                            @if (u.IdUsuario.ToString() == idUsuarioActual)
+                            {
+                                <button type="button" class="btn btn-outline-secondary" disabled title="No puedes resetear tu propia contraseña con la sesión activa">
+                                    <i class="bi bi-key-fill"></i>
+                                </button>
+                            }
+                            else
+                            {
+                                <form asp-action="ResetearClave" asp-route-id="@u.IdUsuario" method="post" class="d-inline"
+                                      data-confirm="¿Generar una nueva contraseña temporal para @u.Correo?"
+                                      data-confirm-btn="Sí, generar">
+                                    <button type="submit" class="btn btn-outline-secondary" title="Resetear contraseña">
+                                        <i class="bi bi-key-fill"></i>
+                                    </button>
+                                </form>
+                            }
+                            @if (u.Rol == "Admin" && u.Activo)
+                            {
+                                <button type="button" class="btn btn-outline-danger" disabled title="No se puede desactivar una cuenta de administrador">
+                                    <i class="bi bi-slash-circle"></i>
+                                </button>
+                            }
+                            else if (u.Activo)
+                            {
+                                <form asp-action="CambiarEstado" asp-route-id="@u.IdUsuario" asp-route-activo="false" method="post" class="d-inline"
+                                      data-confirm="¿Desactivar la cuenta de @u.Correo? No podrá iniciar sesión hasta que la reactives."
+                                      data-confirm-btn="Sí, desactivar">
+                                    <button type="submit" class="btn btn-outline-danger" title="Desactivar">
+                                        <i class="bi bi-slash-circle"></i>
+                                    </button>
+                                </form>
+                            }
+                            else
+                            {
+                                <form asp-action="CambiarEstado" asp-route-id="@u.IdUsuario" asp-route-activo="true" method="post" class="d-inline">
+                                    <button type="submit" class="btn btn-outline-success" title="Activar">
+                                        <i class="bi bi-check-circle"></i>
+                                    </button>
+                                </form>
+                            }
+                        </div>
                     </td>
                 </tr>
             }

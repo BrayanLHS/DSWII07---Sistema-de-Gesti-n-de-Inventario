@@ -51,6 +51,55 @@ namespace SistemaInventario.Data.Repositories
             return lista;
         }
 
+        public List<MovimientoViewModel> ListarPaginado(int? idProducto, int pagina, int tamano, out int total)
+        {
+            var lista = new List<MovimientoViewModel>();
+
+            using SqlConnection cn = conexionBD.ObtenerConexion();
+            cn.Open();
+
+            var filtro = idProducto.HasValue ? " WHERE m.IdProducto = @idProducto" : "";
+
+            using (var cmdTotal = new SqlCommand(
+                $"SELECT COUNT(*) FROM MovimientoInventario m{filtro}", cn))
+            {
+                if (idProducto.HasValue)
+                    cmdTotal.Parameters.AddWithValue("@idProducto", idProducto.Value);
+                total = (int)cmdTotal.ExecuteScalar();
+            }
+
+            var sql = @"SELECT m.IdMovimiento, m.IdProducto, p.Nombre AS NombreProducto,
+                               m.Tipo, m.Cantidad, m.Fecha, m.Motivo
+                        FROM MovimientoInventario m
+                        INNER JOIN Producto p ON p.IdProducto = m.IdProducto"
+                        + filtro +
+                        @" ORDER BY m.Fecha DESC, m.IdMovimiento DESC
+                        OFFSET @salto ROWS FETCH NEXT @tamano ROWS ONLY";
+
+            using SqlCommand cmd = new SqlCommand(sql, cn);
+            if (idProducto.HasValue)
+                cmd.Parameters.AddWithValue("@idProducto", idProducto.Value);
+            cmd.Parameters.AddWithValue("@salto", (pagina - 1) * tamano);
+            cmd.Parameters.AddWithValue("@tamano", tamano);
+
+            using SqlDataReader dr = cmd.ExecuteReader();
+            while (dr.Read())
+            {
+                lista.Add(new MovimientoViewModel
+                {
+                    IdMovimiento = Convert.ToInt32(dr["IdMovimiento"]),
+                    IdProducto = Convert.ToInt32(dr["IdProducto"]),
+                    NombreProducto = dr["NombreProducto"].ToString() ?? string.Empty,
+                    Tipo = dr["Tipo"].ToString() ?? string.Empty,
+                    Cantidad = Convert.ToInt32(dr["Cantidad"]),
+                    Fecha = Convert.ToDateTime(dr["Fecha"]),
+                    Motivo = dr["Motivo"] as string
+                });
+            }
+
+            return lista;
+        }
+
         public void Registrar(MovimientoViewModel movimiento)
         {
             using SqlConnection cn = conexionBD.ObtenerConexion();

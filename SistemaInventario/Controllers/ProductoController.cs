@@ -1,4 +1,5 @@
 using ClosedXML.Excel;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using QuestPDF.Fluent;
@@ -8,6 +9,7 @@ using SistemaInventario.Models;
 
 namespace SistemaInventario.Controllers
 {
+    [Authorize]
     public class ProductoController : Controller
     {
         private readonly IProductoRepositorio _repo;
@@ -27,8 +29,6 @@ namespace SistemaInventario.Controllers
             _movimientos = movimientos;
         }
 
-        // GET: /Producto?buscar=teclado&pagina=1
-        // GET: /Producto?idCategoria=3&idProveedor=2&stockBajo=true
         public IActionResult Index(string? buscar, int pagina = 1, int? idCategoria = null, int? idProveedor = null, bool stockBajo = false)
         {
             const int tamano = 8;
@@ -66,15 +66,12 @@ namespace SistemaInventario.Controllers
             return View(productos);
         }
 
-        // GET: /Producto/Detalle/5
         public IActionResult Detalle(int id)
         {
             var producto = _repo.ObtenerPorId(id);
             return producto == null ? NotFound() : View(producto);
         }
 
-        // GET: /Producto/Registrar
-        // GET: /Producto/Registrar?idCategoria=3
         [HttpGet]
         public IActionResult Registrar(int? idCategoria)
         {
@@ -85,7 +82,6 @@ namespace SistemaInventario.Controllers
             return View(modelo);
         }
 
-        // POST: /Producto/Registrar
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Registrar(ProductoViewModel modelo)
@@ -105,7 +101,7 @@ namespace SistemaInventario.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // GET: /Producto/Editar/5
+
         [HttpGet]
         public IActionResult Editar(int id)
         {
@@ -116,7 +112,6 @@ namespace SistemaInventario.Controllers
             return View(producto);
         }
 
-        // POST: /Producto/Editar
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Editar(ProductoViewModel modelo)
@@ -132,7 +127,6 @@ namespace SistemaInventario.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // POST: /Producto/Eliminar/5
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Eliminar(int id)
@@ -142,7 +136,6 @@ namespace SistemaInventario.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // GET: /Producto/ExportarExcel
         public IActionResult ExportarExcel()
         {
             var productos = _repo.Listar();
@@ -180,7 +173,6 @@ namespace SistemaInventario.Controllers
                 $"Productos_{DateTime.Now:yyyyMMdd_HHmm}.xlsx");
         }
 
-        // GET: /Producto/ExportarPdf
         public IActionResult ExportarPdf()
         {
             var productos = _repo.Listar();

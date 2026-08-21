@@ -278,9 +278,15 @@ body {
 }
 
 /* Footer oscuro, estilo la barra de navegación */
+/* Fijo abajo de la pantalla: siempre visible, no importa el scroll */
 .footer-app {
   background-color: var(--gris-950);
   color: var(--gris-200);
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1030;
 }
 
 .footer-app .footer-link {

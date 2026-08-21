@@ -1,8 +1,5 @@
--- ============================================
+
 -- Script de base de datos: SistemaInventario
--- Version para Azure SQL Database (Query editor / SSMS conectado directo a la base)
--- No incluye CREATE DATABASE ni USE: Azure SQL ya te conecta a la base especifica.
--- ============================================
 
 CREATE TABLE Categoria
 (
@@ -67,14 +64,12 @@ CREATE TABLE Usuario
     Correo VARCHAR(100) NOT NULL UNIQUE,
     Clave VARCHAR(255) NOT NULL,
     Rol VARCHAR(20) NOT NULL DEFAULT 'Usuario',
+    Activo BIT NOT NULL DEFAULT 1,
+    FechaRegistro DATETIME2 NOT NULL DEFAULT GETDATE(),
 
     CHECK (Rol IN ('Admin', 'Usuario'))
 );
 GO
-
--- ============================================
--- Datos de ejemplo
--- ============================================
 
 INSERT INTO Categoria (Nombre)
 VALUES
@@ -108,9 +103,6 @@ VALUES
 (4, 'Entrada', 12, GETDATE(), 'Stock inicial');
 GO
 
--- ============================================
--- Verificacion
--- ============================================
 SELECT * FROM Categoria;
 SELECT * FROM Proveedor;
 SELECT * FROM Producto;
